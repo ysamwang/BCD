@@ -21,7 +21,6 @@ public:
     mat getOmegaInit();
     int getV();
     int getP();
-    Rcpp::List returnGraph();
 
 protected:
 
@@ -30,7 +29,6 @@ protected:
     mat B;
     mat BInit;
     mat OmegaInit;
-    mat omegaSubsetZ(int i);
     mat omegaSubset(int i);
     mat eyeBSubset(int i);
     int V;

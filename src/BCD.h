@@ -11,7 +11,6 @@ using namespace Rcpp ;
 using namespace arma;
 
 Rcpp::List bcdC(Rcpp::List model_r, int maxIter, int sigConv, double maxKap, double tol);
-int updateEstimates(lin_sem graph, int maxIter, int sigConv, double tol);
 
 
 #endif // LINSEM_H
