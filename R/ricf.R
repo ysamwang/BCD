@@ -20,27 +20,21 @@
 #'    a pass through all nodes}
 #'    \item{converged}{boolean on whether or not the algorithm converged before the max iterations}
 ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
-                 tol=10e-6, maxIter=5000, out="none", maxKap = 10^9){
+                 tol=10e-6, maxIter=5000) {
   
-  if (!is.matrix(Omega) || !is.matrix(Y))
-    stop("Omega and X must be matrices!")
+  if (!is.matrix(Omega) || !is.matrix(Y) || !is.matrix(B))
+    stop("Omega B, and X must be matrices!")
   if (nrow(Omega) != ncol(Omega))
     stop("Omega must be a square matrix!")
   if (sum(abs(Omega-t(Omega)))> 0)
     stop("O must be a symmetric matrix!")
-  if (!is.matrix(B))
-    stop("B must be a matrix!")
   if (nrow(B) != ncol(B) || nrow(Omega) != nrow(B))
       stop("B must be a square matrix! the same size as Omega")
   
-  if(is.null(BInit)){
-    BInit = matrix(0, nrow = dim(B)[1], ncol = dim(B)[1])
-    BInit[0, 0] = 1
-  }
   if (sum(abs(B * Omega)) != 0) {
     warning("The graph either contains a bow or a self-loop.",call. = FALSE, immediate. = TRUE)
   }	
-  if (maxIter <= 0 || maxIter %% 1 != 0)
+  if (maxIter <= 0 || ceiling(maxIter) != maxIter)
     stop("A positive integer is needed for the max number of iterations!")
   if (tol <= 0)
     stop("A positive tolerance is needed for convergence to be possible!")

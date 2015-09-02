@@ -12,6 +12,7 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
   int i;
   int counter = 0;
   double convCrit = 1.0;
+
   if(sigConv){
     arma::mat oldSigma;
     arma::mat newSigma = graph.getSigma();
@@ -42,7 +43,7 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
       convCrit = norm(oldB - newB, 2) + norm(oldOmega - newOmega, 2);
       counter ++;
     }
-  }
+}
 
     
     return Rcpp::List::create(Rcpp::Named("Omega_hat", graph.getOmegaInit()),
