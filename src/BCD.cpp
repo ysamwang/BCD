@@ -45,8 +45,9 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
     }
   }
 
-    return Rcpp::List::create(Rcpp::Named("Omega_hat", graph.getOmegaInit()),
-                              Rcpp::Named("B_hat", graph.getBInit()),
+    return Rcpp::List::create(Rcpp::Named("SigmaHat", graph.getSigma()),
+                              Rcpp::Named("OmegaHat", graph.getOmegaInit()),
+                              Rcpp::Named("BHat", graph.getBInit()),
                               Rcpp::Named("Iter", counter),
                               Rcpp::Named("Converged", (convCrit < tol))
                                 );

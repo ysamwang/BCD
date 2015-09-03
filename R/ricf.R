@@ -12,7 +12,6 @@
 #'    convergence in Sigma while \code{FALSE} looks for convergence in the actual edge weight estimates  
 #' @param tol convegence tolerance
 #' @param maxIter integer specifying the maximum number of iterations
-#' @param maxKap positive scalar which determines largest conditioning number before throwing error
 #' @return \item{sigmaHat}{estimated covariance matrix at convergence}
 #'    \item{bHat}{estimated B matrix (edge weights for directed edges) at converegence}
 #'    \item{omegaHat}{estimated Omega (edge weights for bi-directed edges) at convergence}

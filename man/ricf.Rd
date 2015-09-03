@@ -5,7 +5,7 @@
 \title{Fitting Cyclic Linear Structural Equation Models}
 \usage{
 ricf(B, Omega, Y, BInit = NULL, OmegaInit = NULL, sigConv = TRUE,
-  tol = 1e-05, maxIter = 5000, out = "none", maxKap = 10^9)
+  tol = 1e-05, maxIter = 5000)
 }
 \arguments{
 \item{B}{V by V matrix with {0,1} giving structure of directed edges}
@@ -20,10 +20,10 @@ ricf(B, Omega, Y, BInit = NULL, OmegaInit = NULL, sigConv = TRUE,
 
 \item{maxIter}{integer specifying the maximum number of iterations}
 
-\item{maxKap}{positive scalar which determines largest conditioning number before throwing error}
-
 \item{signConv}{boolean which specifies how to measure convergence. \code{TRUE} looks for
 convergence in Sigma while \code{FALSE} looks for convergence in the actual edge weight estimates}
+
+\item{maxKap}{positive scalar which determines largest conditioning number before throwing error}
 }
 \value{
 \item{sigmaHat}{estimated covariance matrix at convergence}

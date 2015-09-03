@@ -45,7 +45,7 @@ sum((Omega.initial - Omega.true)^2)
 
 
 
-sigma_hat <- solve(diag(rep(1,V)) - out$B_hat) %*% out$Omega_hat %*% t(solve(diag(rep(1,V)) - out$B_hat))
+sigma_hat <- solve(diag(rep(1,V)) - out$BHat) %*% out$OmegaHat %*% t(solve(diag(rep(1,V)) - out$BHat))
 sigma.true <- solve(diag(rep(1,V)) - B.true) %*% Omega.true %*% t(solve(diag(rep(1,V)) - B.true))
 
 
@@ -63,27 +63,6 @@ sum((out$B_hat + test$Bhat)^2)
 sum((out$Omega_hat - test$Omegahat)^2)
 
 
-
-# P <- diag(rep(1, 5))
-# P[, 1] <- P[1, ] <- c(0,0,0,1,0)
-# P[, 4] <- P[4, ] <- c(1,0,0,0,0)
-# O <- P %*% O %*% P
-# L <- P %*% L %*% P
-# X <- X %*% P
-# Linit <- P %*% Linit %*% P
-# Oinit <- P %*% Oinit %*% P
-# testPerm <- ricfR(L = L, O = O, X  = X, Linit = LInit, Oinit = OInit, sigconv=FALSE, tol=10^(-6),
-#               maxiter=1, out="none", maxkap = 10^6, B = NULL)
-# 
-# Omega <- P %*% Omega %*% P
-# B <- P %*% B %*% P
-# Y <- P %*% Y
-# B.initial <- P %*% B.initial %*% P
-# Omega.initial <- P %*% Omega.initial %*% P
-# 
-# out <- ricf(B = B, Omega = Omega, Y = Y, BInit = B.initial,
-#             OmegaInit = Omega.initial, sigConv = 0, maxIter = 1)
-# 
 microbenchmark(ricf(B = B, Omega = Omega, Y = Y, BInit = B.initial, OmegaInit = Omega.initial))
 microbenchmark(ricfR(L = L, O = O, X  = X, Linit = Linit, Oinit = Oinit, sigconv=FALSE, tol=10^(-6),
                      maxiter=500, out="none", maxkap = 10^6, B = NULL))
