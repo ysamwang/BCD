@@ -76,6 +76,8 @@ void lin_sem::updateNode(int i)
     arma::uvec i_in_sib_i = find(sib_i == i);
     int i_index = i_in_sib_i[0];
     sib_i.shed_row(i_index); //remove self from siblings
+    // Rcout <<"Siblings: "<<sib_i <<endl;
+    // Rcout <<"Parents: " <<pa_i <<endl;
     int s = sib_i.n_elem;
     int p = pa_i.n_elem;
     
@@ -154,7 +156,6 @@ void lin_sem::updateNode(int i)
       
     } else {
       // Full BCD
-      
         //get Qp
         arma::mat Qp;
         
@@ -163,11 +164,13 @@ void lin_sem::updateNode(int i)
         
         
         if(a_pa.n_elem > 1) {
-            Qp =  join_vert(null(a_pa.t()).t(), a_pa.t()); 
+            Qp =  join_vert(null(a_pa.t()).t(), a_pa.t());
         } else {
-          Qp << 1.0 <<endr;
+          Qp << a_pa(0) <<endr;
         }
 
+        // Rcout <<"Qp: " << Qp <<endl;
+        // Rcout << "Qp times: " << Qp * a_pa <<endl;
         if(s > 0){
           //get psuedo variables
           sib2 = sib_i;
@@ -178,10 +181,14 @@ void lin_sem::updateNode(int i)
         } else {
           X =  Qp * Y.rows(pa_i);
         }
+        
+        // Rcout << "X: "<< X <<endl;
         // QR decomposition of X^t
         arma::mat Q, R;
         
         qr(Q, R, X.t());
+        // Rcout <<"Q: " <<Q <<endl;
+        // Rcout <<"R: " << R <<endl;
         // Compute y_0^2 for gamma^\star
         double yNaught2 = 0;
         for(k = s + p; k < Y.n_cols; k++) {
@@ -195,15 +202,20 @@ void lin_sem::updateNode(int i)
         if(s + p > 1){ 
           gammaStar.cols(0, s + p - 2) = Y.row(i) * Q.cols(0, s + p - 2);
         }
+//         Rcout <<"Qp: "<< Qp <<endl;
+//         Rcout <<"y_i: "<< Y.row(i) << endl <<"Q: " << Q.col(s + p - 1) <<endl;
         gammaStar(s + p - 1) = (pow(yQ_sp, 2) + yNaught2 + r * aNaught * yQ_sp) / (r * aNaught + yQ_sp );
-
+//         Rcout <<"y0: "<< yNaught2 << " yQ :" << yQ_sp << " a0: " <<aNaught << endl;
+//         Rcout <<"R: "<< r << " sol :" << gammaStar(s + p - 1) << endl;
+//         Rcout <<"Gamma-Star: "<< gammaStar <<endl;
         
         arma::rowvec solved = solve(R.rows(0, s + p - 1), gammaStar.t()).t();
-
+//         Rcout << "Solved: "<< solved <<endl;
+//         Rcout << "B Update: "<< solved.cols(s, s + p - 1) * Qp <<endl;
         BInit(i_vec, pa_i) = solved.cols(s, s + p - 1) * Qp;
+        // Rcout <<"BInit: "<< BInit <<endl;
         
         if( s > 0 ){
-
           OmegaInit(i_vec, sib_i) = solved.cols(0, s - 1);
           OmegaInit(sib_i, i_vec) = solved.cols(0, s - 1).t();
           resid = Y.row(i) - BInit(i_vec, pa_i) * Y.rows(pa_i) - OmegaInit(i_vec, sib_i) * Z.rows(sib2);

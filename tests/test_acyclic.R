@@ -5,6 +5,7 @@ library(MASS)
 library(microbenchmark)
 set.seed(888)
 V <- 5
+n <- 20
 B <- matrix(c(0,1,0,0,0,
               0,0,1,0,0,
               0,0,0,1,0,
@@ -19,10 +20,10 @@ Omega.true <- ifelse(Omega,runif(V^2, -1, 1),0) + diag(rep(4, V))
 sigma = solve(diag(rep(1, V)) - B.true) %*% Omega.true %*% t(solve(diag(rep(1, V)) - B.true))
 prod(eigen(sigma)$values > 0)
 
-Y <- t(mvrnorm(n = 10, mu = rep(0, V), Sigma = sigma))
+Y <- t(mvrnorm(n = n, mu = rep(0, V), Sigma = sigma))
 B.initial <- matrix(rnorm(V^2), nrow = V) * B
-Omega.initial <- diag(rnorm(V))
-Omega.initial[1,3] <- Omega.initial[3,1] <- min(abs(Omega.initial[1,1]), abs(Omega.initial[3,3]))/2
+Omega.initial <- matrix(rnorm(V^2), nrow = V) %*% t(matrix(rnorm(V^2), nrow = V))
+Omega.initial <- Omega.initial * Omega
 
 sum((B.initial - B.true)^2)
 sum((Omega.initial - Omega.true)^2)

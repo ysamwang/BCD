@@ -10,7 +10,7 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
   
   //start Updates
   int i;
-  int counter = 0;
+  int counter = 1;
   double convCrit = 1.0;
 
   if(sigConv){
@@ -43,9 +43,8 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
       convCrit = norm(oldB - newB, 2) + norm(oldOmega - newOmega, 2);
       counter ++;
     }
-}
+  }
 
-    
     return Rcpp::List::create(Rcpp::Named("Omega_hat", graph.getOmegaInit()),
                               Rcpp::Named("B_hat", graph.getBInit()),
                               Rcpp::Named("Iter", counter),

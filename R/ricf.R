@@ -39,7 +39,7 @@ ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
   if (tol <= 0)
     stop("A positive tolerance is needed for convergence to be possible!")
 
-  ret <- bcdC(B, Omega, BInit, OmegaInit, Y, maxIter = 500, sigConv = F, maxKap = 1e9, tol= 1e-6)
+  ret <- bcdC(B, Omega, BInit, OmegaInit, Y, maxIter = maxIter, sigConv = F, maxKap = 1e9, tol= 1e-6)
   
   return(ret)
 
