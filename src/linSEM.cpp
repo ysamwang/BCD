@@ -4,22 +4,29 @@ using namespace Rcpp ;
 using namespace arma ;
 lin_sem::lin_sem(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr)
 {
-    B = as<arma::mat>(Br);
-    Omega =  as<arma::mat>(Omegar);
-    BInit = as<arma::mat>(clone(BInitr));
-    OmegaInit =  as<arma::mat>(clone(OmegaInitr));
-    Y = as<arma::mat>(Yr);
+    B = as<arma::mat>(clone(Br));
+    Omega =  as<arma::mat>(clone(Omegar));
+    //if BInit is null, use initialization routine
+    Y = as<arma::mat>(clone(Yr));
     V = B.n_cols;
     P = Y.n_cols;
-    //if BInit is null, use initialization routine
-   if(Rf_isNull(BInitr))
-   {
-       initEst();
-   }
+    if(Rf_isNull(BInitr))
+    {
+      initEst();
+    } else {
+      BInit = as<arma::mat>(clone(BInitr));
+      OmegaInit =  as<arma::mat>(clone(OmegaInitr));
+    }
+    
+   
 }
 
 void lin_sem::initEst()
 {
+    BInit = arma::mat(V, V);
+    BInit.zeros();
+    OmegaInit = arma::mat(V, V);
+    OmegaInit.zeros();
     int i;
     //initialize B and Omega
     uvec i_vec(1);
@@ -34,7 +41,7 @@ void lin_sem::initEst()
             BInit(i_vec, pa_i ) = coef.t();
 
             //Estimate residual from OLS and use as initial estimates
-            resid.row(i) = (Y.row(i) - coef * Y.rows(pa_i));
+            resid.row(i) = (Y.row(i) - coef.t() * Y.rows(pa_i));
         } else {
             resid.row(i) = Y.row(i) - mean(Y.row(i));
         }

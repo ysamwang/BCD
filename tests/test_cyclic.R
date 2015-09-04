@@ -35,14 +35,26 @@ sum((B.initial - B.true)^2)
 sum((Omega.initial - Omega.true)^2)
 
 
+out <- ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
+            OmegaInit = NULL, sigConv = 0, maxIter = 5000)
+sum((out$BHat - B.true)^2)
+sum((out$OmegaHat - Omega.true)^2)
+out$Iter
+
 out <- ricf(B = B, Omega = Omega, Y = Y, BInit = B.initial,
-            OmegaInit = Omega.initial, sigConv = 0, maxIter = 1000)
-sum((out$B_hat - B.true)^2)
-sum((out$Omega_hat - Omega.true)^2)
+            OmegaInit = Omega.initial, sigConv = 0, maxIter = 5000)
+sum((out$BHat - B.true)^2)
+sum((out$OmegaHat - Omega.true)^2)
+out$Iter
+
 
 sum((B.initial - B.true)^2)
 sum((Omega.initial - Omega.true)^2)
 
+microbenchmark(ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
+                                   OmegaInit = NULL, sigConv = 0, maxIter = 5000))
+microbenchmark(ricf(B = B, Omega = Omega, Y = Y, BInit = B.initial,
+                    OmegaInit = Omega.initial, sigConv = 0, maxIter = 5000))
 
 
 sigma_hat <- solve(diag(rep(1,V)) - out$BHat) %*% out$OmegaHat %*% t(solve(diag(rep(1,V)) - out$BHat))
