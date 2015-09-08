@@ -2,37 +2,49 @@
 
 using namespace Rcpp ;
 using namespace arma ;
-lin_sem::lin_sem(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr)
+
+//Constructur
+// Br is a matrix of 1's an 0's indicating the directed edge structure
+// Omegar is a matrix of 1's and 0's indicatin the bidirected edge structure
+// BInitr is a matrix of initial directed edge weights
+// OmegaInitr is a matrix of initial bidirected edge weights
+// Yr is an V x n matrix of observations
+lin_sem::lin_sem(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, double OmegaInitScale)
 {
-    B = as<arma::mat>(clone(Br));
-    Omega =  as<arma::mat>(clone(Omegar));
+    // take SEXP data structures and convert to armadillo data structures
+    B = as<arma::mat>(Br);
+    Omega =  as<arma::mat>(Omegar);
+    Y = as<arma::mat>(Yr);
+    V = B.n_cols; // number of nodes
+    
     //if BInit is null, use initialization routine
-    Y = as<arma::mat>(clone(Yr));
-    V = B.n_cols;
-    P = Y.n_cols;
+    // else use given initialization
     if(Rf_isNull(BInitr))
     {
-      initEst();
+      initEst(OmegaInitScale);
     } else {
+      // clone since these will be updated
       BInit = as<arma::mat>(clone(BInitr));
       OmegaInit =  as<arma::mat>(clone(OmegaInitr));
     }
-    
-   
+    //initialize singleUpdates to all 0's
+    singleUpdates.zeros(V);
 }
 
-void lin_sem::initEst()
+void lin_sem::initEst(double OmegaInitScale)
 {
-    BInit = arma::mat(V, V);
-    BInit.zeros();
-    OmegaInit = arma::mat(V, V);
-    OmegaInit.zeros();
     int i;
+    
+    //initialize to all 0's with 
+    BInit.zeros(V, V); 
+    OmegaInit.zeros(V,V);
+    
     //initialize B and Omega
-    uvec i_vec(1);
-    mat resid;
-    resid.copy_size(Y);
-    for(i = 0; i < V; i++) {
+    uvec i_vec(1); // uvec to get i'th row/column
+    mat resid; //matrix of residuals from regressions
+    resid.copy_size(Y); //same size as Y
+    
+        for(i = 0; i < V; i++) {
         // Set B through OLS
         uvec pa_i = find(B.row(i));
         if( pa_i.n_rows > 0) {
@@ -42,40 +54,50 @@ void lin_sem::initEst()
 
             //Estimate residual from OLS and use as initial estimates
             resid.row(i) = (Y.row(i) - coef.t() * Y.rows(pa_i));
-        } else {
+        } else { 
+            //if there are no parents, just get deviations from mean
             resid.row(i) = Y.row(i) - mean(Y.row(i));
         }
     }
+    
+    // punch 0's into the sample covariance and get eigen values    
     OmegaInit = Omega % cov(resid.t());
     vec eigval = eig_sym( OmegaInit );
     
+    
     //Check if OmegaInit is PD
     if(!all(eigval > 0)) {
+      //if not, scale down rows so that it is diagonally dominant to ensure PD
       rowvec row_i;
       double row_sum;
       int j;
-      //if not, scale down rows so that it is diagonally dominant
+      
       for(i = 0; i < V; i++){
+        //get sum of row i without element i
         row_i = OmegaInit.row(i);
         row_i.shed_col(i);
         row_sum = sum(abs(row_i));
+        
+        //check for diagonal dominance in row i
         if(row_sum > OmegaInit(i,i))
         {
           //scale down each element so that the sum of the off-diagonals is equal to (omega_ii * .9)
           for(j = 0; j < V; j++)
           {
             if(j != i){
-              OmegaInit(i, j) = OmegaInit(i, j) * OmegaInit(i,i) * 0.9 / row_sum;
-              OmegaInit(j, i) = OmegaInit(j, i) * OmegaInit(i,i) * 0.9/ row_sum;
+              OmegaInit(i, j) = OmegaInit(i, j) * OmegaInit(i,i) * OmegaInitScale / row_sum;
+              OmegaInit(j, i) = OmegaInit(i, j);
             }
           }
         }
       }
     }
+    
+    
 }
 
 
-void lin_sem::updateNode(int i)
+int lin_sem::updateNode(int i, double maxKappa)
 {
     // get parents and siblings
     uvec pa_i = find(B.row(i));
@@ -83,15 +105,13 @@ void lin_sem::updateNode(int i)
     arma::uvec i_in_sib_i = find(sib_i == i);
     int i_index = i_in_sib_i[0];
     sib_i.shed_row(i_index); //remove self from siblings
-    // Rcout <<"Siblings: "<<sib_i <<endl;
-    // Rcout <<"Parents: " <<pa_i <<endl;
-    int s = sib_i.n_elem;
+    
+    int s = sib_i.n_elem; //number of siblings and parents
     int p = pa_i.n_elem;
-    
-    
-    
+
+    //uvec which hold's i 
     uvec i_vec;
-    i_vec<< i <<endr;
+    i_vec << i <<endr;
     
     arma::mat X;
     arma::mat Z;
@@ -100,6 +120,12 @@ void lin_sem::updateNode(int i)
     arma::uvec sib2;
     int k;
     double det1, det2, aNaught;
+    
+    double condNumber = cond(omegaSubset(i));
+    if(condNumber > maxKappa){
+      Rcout <<"Condition Number too large: " << condNumber <<endl;
+      return 0;
+    }
     
 
     //calculate a_0 and a_pa
@@ -125,12 +151,11 @@ void lin_sem::updateNode(int i)
         sib2.elem(find(sib2 > i)) = sib2.elem(find(sib2 > i)) - 1;
         
         arma::mat Z = solve(omegaSubset(i), eyeBSubset(i)) * Y;
-        
         if( p > 0 ) {
         // combine into a single matrix
           X = join_vert(Z.rows(sib2), Y.rows(pa_i));
           solved = solve(X.t(), Y.row(i).t());
-          
+
           //update Binit since there are
           BInit(i_vec, pa_i) = solved.rows(s, s + p - 1).t();
         } else {
@@ -145,11 +170,15 @@ void lin_sem::updateNode(int i)
         resid = Y.row(i) - solved.t() * X;
         
       
-      } else {
+      } else { //no siblings
+
+        //since there are no siblings and a_pa = 0, then this only needs to be updated once
+        singleUpdates(i) = 1;
+        
         if( p > 0 ) {
           X = Y.rows(pa_i);
           solved = solve(X.t(), Y.row(i).t());
-          BInit(i_vec, pa_i) = solved.cols(s, s + p - 1);
+          BInit(i_vec, pa_i) = solved.rows(0, p - 1).t();
           resid = Y.row(i) - solved.t() * X;
         } else {
           resid = Y.row(i) - mean(Y.row(i));
@@ -158,14 +187,18 @@ void lin_sem::updateNode(int i)
        
       arma::vec omegaVec = OmegaInit.col(i);
       omegaVec.shed_row(i);
+      
+      
+      
       OmegaInit(i, i) = 1.0 / Y.n_cols * pow (norm(resid), 2) +
         dot(omegaVec.t() , solve(omegaSubset(i),  omegaVec));
-      
+
     } else {
-      // Full BCD
+        // Full BCD
         //get Qp
         arma::mat Qp;
         
+        //normalize a_pa and aNaught
         aNaught = aNaught / norm(a_pa, 2);
         a_pa = a_pa / norm(a_pa, 2);
         
@@ -176,8 +209,7 @@ void lin_sem::updateNode(int i)
           Qp << a_pa(0) <<endr;
         }
 
-        // Rcout <<"Qp: " << Qp <<endl;
-        // Rcout << "Qp times: " << Qp * a_pa <<endl;
+        
         if(s > 0){
           //get psuedo variables
           sib2 = sib_i;
@@ -189,14 +221,13 @@ void lin_sem::updateNode(int i)
           X =  Qp * Y.rows(pa_i);
         }
         
-        // Rcout << "X: "<< X <<endl;
+        
         // QR decomposition of X^t
         arma::mat Q, R;
         
         qr(Q, R, X.t());
-        // Rcout <<"Q: " <<Q <<endl;
-        // Rcout <<"R: " << R <<endl;
-        // Compute y_0^2 for gamma^\star
+
+                // Compute y_0^2 for gamma^\star
         double yNaught2 = 0;
         for(k = s + p; k < Y.n_cols; k++) {
             yNaught2 += pow(dot(Y.row(i), Q.col(k)), 2);
@@ -209,18 +240,11 @@ void lin_sem::updateNode(int i)
         if(s + p > 1){ 
           gammaStar.cols(0, s + p - 2) = Y.row(i) * Q.cols(0, s + p - 2);
         }
-//         Rcout <<"Qp: "<< Qp <<endl;
-//         Rcout <<"y_i: "<< Y.row(i) << endl <<"Q: " << Q.col(s + p - 1) <<endl;
         gammaStar(s + p - 1) = (pow(yQ_sp, 2) + yNaught2 + r * aNaught * yQ_sp) / (r * aNaught + yQ_sp );
-//         Rcout <<"y0: "<< yNaught2 << " yQ :" << yQ_sp << " a0: " <<aNaught << endl;
-//         Rcout <<"R: "<< r << " sol :" << gammaStar(s + p - 1) << endl;
-//         Rcout <<"Gamma-Star: "<< gammaStar <<endl;
-        
+
         arma::rowvec solved = solve(R.rows(0, s + p - 1), gammaStar.t()).t();
-//         Rcout << "Solved: "<< solved <<endl;
-//         Rcout << "B Update: "<< solved.cols(s, s + p - 1) * Qp <<endl;
         BInit(i_vec, pa_i) = solved.cols(s, s + p - 1) * Qp;
-        // Rcout <<"BInit: "<< BInit <<endl;
+
         
         if( s > 0 ){
           OmegaInit(i_vec, sib_i) = solved.cols(0, s - 1);
@@ -234,21 +258,18 @@ void lin_sem::updateNode(int i)
         omegaVec.shed_row(i);
         OmegaInit(i, i) = 1.0 / Y.n_cols * pow(norm(resid,2), 2) + dot(omegaVec.t() , solve(omegaSubset(i),  omegaVec));
     }
+    
+    // succesfully updated. If condition number of Omega[-i,-i] is too large, then it returns 0 and does not update
+    return 1;
 }
 
 
 mat lin_sem::omegaSubset(int i)
 {
     arma::mat ret;
-    if(i == 0) {
-        ret =  OmegaInit(span(1,V - 1), span(1, V -1));
-    } else if (i == V) {
-        ret = OmegaInit(span(0, V - 2), span(0, V -2));
-    } else {
-        ret = OmegaInit;
-        ret.shed_row(i);
-        ret.shed_col(i);
-    }
+    ret = OmegaInit;
+    ret.shed_row(i);
+    ret.shed_col(i);
     return ret;
 }
 
@@ -281,3 +302,7 @@ int lin_sem::getV()
     return V;
 }
 
+int lin_sem::singleUpdateOnly(int i)
+{
+  return (int) singleUpdates[i];
+}

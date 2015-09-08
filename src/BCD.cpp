@@ -3,45 +3,62 @@
 //[[Rcpp::depends(RcppArmadillo)]]
 //[[Rcpp::export]]
 Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int maxIter, int sigConv,
-                double maxKap, double tol) {
+                double maxKap, double tol, double omegaInitScale) {
 
     //initialize graph object
-  lin_sem graph = lin_sem(Br, Omegar, BInitr, OmegaInitr, Yr);
+  lin_sem graph = lin_sem(Br, Omegar, BInitr, OmegaInitr, Yr, omegaInitScale);
   
   //start Updates
   int i;
-  int counter = 1;
+  int counter = 0;
   double convCrit = 1.0;
 
   if(sigConv){
-    arma::mat oldSigma;
-    arma::mat newSigma = graph.getSigma();
+    
+    arma::mat oldSigma; // hold previous sigma estimate
+
     while(convCrit > tol && counter < maxIter){
-      oldSigma = newSigma;
+      oldSigma = graph.getSigma();
+      
+      //update nodes
       for(i = 0; i < graph.getV(); i++)
       {
-        graph.updateNode(i);
+          if(!graph.updateNode(i, maxKap)){
+            return Rcpp::List::create(Rcpp::Named("SigmaHat", graph.getSigma()),
+                                      Rcpp::Named("OmegaHat", graph.getOmegaInit()),
+                                      Rcpp::Named("BHat", graph.getBInit()),
+                                      Rcpp::Named("Iter", counter),
+                                      Rcpp::Named("Converged", 0)
+            );
+          }
       }
-      newSigma = graph.getSigma();
-      convCrit = norm(oldSigma - newSigma, 2);
+      
+      //update convergence criteria and counter
+      convCrit = norm(oldSigma - graph.getSigma(), "fro");
       counter ++;
     }
   } else {
+    //place holders for old B and old Omega
     arma::mat oldB;
-    arma::mat newB = graph.getBInit();
     arma::mat oldOmega;
-    arma::mat newOmega = graph.getOmegaInit();
     while(convCrit > tol && counter < maxIter){
-      oldB = newB;
-      oldOmega = newOmega;
+      oldB = graph.getBInit();
+      oldOmega = graph.getOmegaInit();
       for(i = 0; i < graph.getV(); i++)
       {
-        graph.updateNode(i);
+        //check if the node needs to be updated
+          if(!graph.updateNode(i, maxKap)){
+            return Rcpp::List::create(Rcpp::Named("SigmaHat", graph.getSigma()),
+                                    Rcpp::Named("OmegaHat", graph.getOmegaInit()),
+                                    Rcpp::Named("BHat", graph.getBInit()),
+                                    Rcpp::Named("Iter", counter),
+                                    Rcpp::Named("Converged", 0)
+          );
+        }
       }
-      newB = graph.getBInit();
-      newOmega = graph.getOmegaInit();
-      convCrit = norm(oldB - newB, 2) + norm(oldOmega - newOmega, 2);
-      counter ++;
+     
+     convCrit = norm(oldB - graph.getBInit(), "fro") + norm(oldOmega - graph.getOmegaInit(), "fro");
+    counter++;
     }
   }
 

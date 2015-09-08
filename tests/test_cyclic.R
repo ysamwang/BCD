@@ -51,30 +51,12 @@ out$Iter
 sum((B.initial - B.true)^2)
 sum((Omega.initial - Omega.true)^2)
 
-microbenchmark(ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
+t1 <- microbenchmark(ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
                                    OmegaInit = NULL, sigConv = 0, maxIter = 5000))
-microbenchmark(ricf(B = B, Omega = Omega, Y = Y, BInit = B.initial,
-                    OmegaInit = Omega.initial, sigConv = 0, maxIter = 5000))
+t2 <- microbenchmark(ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
+                          OmegaInit = NULL, sigConv = 0, maxIter = 5000, msgs = FALSE))
 
 
 sigma_hat <- solve(diag(rep(1,V)) - out$BHat) %*% out$OmegaHat %*% t(solve(diag(rep(1,V)) - out$BHat))
 sigma.true <- solve(diag(rep(1,V)) - B.true) %*% Omega.true %*% t(solve(diag(rep(1,V)) - B.true))
 
-
-
-L <- t(B)
-O <- Omega
-X <- t(Y)
-Linit <- t(B.initial)
-Oinit <- Omega.initial
-
-test <- ricfR(L = L, O = O, X  = X, Linit = Linit, Oinit = Oinit, sigconv=FALSE, tol=10^(-6),
-                  maxiter=500, out="none", maxkap = 10^6, B = NULL)
-
-sum((out$B_hat + test$Bhat)^2)
-sum((out$Omega_hat - test$Omegahat)^2)
-
-
-microbenchmark(ricf(B = B, Omega = Omega, Y = Y, BInit = B.initial, OmegaInit = Omega.initial))
-microbenchmark(ricfR(L = L, O = O, X  = X, Linit = Linit, Oinit = Oinit, sigconv=FALSE, tol=10^(-6),
-                     maxiter=500, out="none", maxkap = 10^6, B = NULL))

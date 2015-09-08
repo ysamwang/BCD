@@ -12,6 +12,7 @@
 #'    convergence in Sigma while \code{FALSE} looks for convergence in the actual edge weight estimates  
 #' @param tol convegence tolerance
 #' @param maxIter integer specifying the maximum number of iterations
+#' @param msgs boolean on whether to print messages to command line
 #' @return \item{sigmaHat}{estimated covariance matrix at convergence}
 #'    \item{bHat}{estimated B matrix (edge weights for directed edges) at converegence}
 #'    \item{omegaHat}{estimated Omega (edge weights for bi-directed edges) at convergence}
@@ -19,7 +20,7 @@
 #'    a pass through all nodes}
 #'    \item{converged}{boolean on whether or not the algorithm converged before the max iterations}
 ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
-                 tol=10e-6, maxIter=5000) {
+                 tol=10e-6, maxIter=5000, msgs = TRUE, omegaInitScale = .9, maxKap = 1e13) {
   
   if (!is.matrix(Omega) || !is.matrix(Y) || !is.matrix(B))
     stop("Omega B, and X must be matrices!")
@@ -30,7 +31,7 @@ ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
   if (nrow(B) != ncol(B) || nrow(Omega) != nrow(B))
       stop("B must be a square matrix! the same size as Omega")
   
-  if (sum(abs(B * Omega)) != 0) {
+  if (msgs & sum(abs(B * Omega)) != 0) {
     warning("The graph either contains a bow or a self-loop.",call. = FALSE, immediate. = TRUE)
   }	
   if (maxIter <= 0 || ceiling(maxIter) != maxIter)
@@ -38,7 +39,7 @@ ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
   if (tol <= 0)
     stop("A positive tolerance is needed for convergence to be possible!")
 
-  ret <- bcdC(B, Omega, BInit, OmegaInit, Y, maxIter = maxIter, sigConv = F, maxKap = 1e9, tol= 1e-6)
+  ret <- bcdC(B, Omega, BInit, OmegaInit, Y, maxIter = maxIter, sigConv = sigConv, maxKap = maxKap, tol= tol, omegaInitScale =omegaInitScale)
   
   return(ret)
 

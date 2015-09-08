@@ -7,8 +7,8 @@
 using namespace Rcpp;
 
 // bcdC
-Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int maxIter, int sigConv, double maxKap, double tol);
-RcppExport SEXP BCD_bcdC(SEXP BrSEXP, SEXP OmegarSEXP, SEXP BInitrSEXP, SEXP OmegaInitrSEXP, SEXP YrSEXP, SEXP maxIterSEXP, SEXP sigConvSEXP, SEXP maxKapSEXP, SEXP tolSEXP) {
+Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int maxIter, int sigConv, double maxKap, double tol, double omegaInitScale);
+RcppExport SEXP BCD_bcdC(SEXP BrSEXP, SEXP OmegarSEXP, SEXP BInitrSEXP, SEXP OmegaInitrSEXP, SEXP YrSEXP, SEXP maxIterSEXP, SEXP sigConvSEXP, SEXP maxKapSEXP, SEXP tolSEXP, SEXP omegaInitScaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
@@ -21,7 +21,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type sigConv(sigConvSEXP);
     Rcpp::traits::input_parameter< double >::type maxKap(maxKapSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    __result = Rcpp::wrap(bcdC(Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, tol));
+    Rcpp::traits::input_parameter< double >::type omegaInitScale(omegaInitScaleSEXP);
+    __result = Rcpp::wrap(bcdC(Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, tol, omegaInitScale));
     return __result;
 END_RCPP
 }

@@ -56,32 +56,34 @@ k <- 5
 d <- .2
 b <- d/2
 
-do.one <- function(p, n, k, d, b, times = 5, tol = 1e-2, seed = NULL){
-  if(!is.null(seed)){
-    set.seed()
-  }
+do.one <- function(p, n, k, d, b, times = 5, tol = 1e-2){
+
   # Setup B and Omega matrices
   B <- matrix(0, nrow = p, ncol = p)
   Omega <- diag(rep(1, p))
   
-  # use sampling scheme as given in paper
-  for(i in 1:(k-1))
-  {
-    B[i+1, i] <- 1
+  # Generate cycle from 1 -> 2 -> ... K -> 1
+  if(k > 0){
+    for(i in 1:(k-1))
+    {
+      B[i+1, i] <- 1
+    }
+    B[1, k] <- 1
   }
-  B[1, k] <- 1
   
   for(i in 2:p)
   {
     for(j in 1:(i-1))
     {
+      if(!B[j,i]){
       U <- runif(1)
       if(U < d){
         B[j, i] <-1
       } else {
         if(U < b + d)
-        { 
+          { 
           Omega[i,j] <- Omega[j,i] <- 1  
+          }
         }
       }
     }
@@ -89,14 +91,17 @@ do.one <- function(p, n, k, d, b, times = 5, tol = 1e-2, seed = NULL){
   
   # reorder the vertices
   reorder <- sample(p)
-  B <- B[reorder, reorder]
-  Omega <- Omega[reorder, reorder]
+  B <- B[reorder, ]
+  B <- B[, reorder]
+  Omega <- Omega[reorder, ]
+  Omega <- Omega[, reorder]
   
   # Sample edge weights as given in the paper
   B.true <- matrix(rnorm(p^2), nrow = p) * B
   Omega.true <- matrix(rnorm(p^2), nrow = p)
   Omega.true[lower.tri(Omega.true, diag = F)] <- t(Omega.true)[lower.tri(Omega.true, diag = F)] 
   Omega.true <- Omega.true * Omega
+  
   for(i in 1:p){
     Omega.true[i,i] <- sum(abs(Omega.true[i, -i])) + 1 + rchisq(1, df = 1)
   }
@@ -107,21 +112,43 @@ do.one <- function(p, n, k, d, b, times = 5, tol = 1e-2, seed = NULL){
   Y <- Y - rowMeans(Y)
   
   
+  ricfRres <- ricfR(O = Omega, X = t(Y), Linit = NULL, Oinit = NULL, sigconv=FALSE, B = B)
   
   time.ricf <- microbenchmark::microbenchmark(out.ricf <- ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
-                                               OmegaInit = NULL, sigConv = 1, maxIter =5000), times = times)
-  
+                                               OmegaInit = NULL, sigConv = 0, maxIter =5000, msgs = FALSE, omegaInitScale = .9), times = times)
+  if(!out.ricf$Converged){
+    browser()
+  }
   d <- as.data.frame(t(Y))
   names(d) <- paste("x", c(1:p), sep = "")
   
-  time.sem <- microbenchmark::microbenchmark(out.sem <- sem(model = specifyModelSEM(B, Omega), data = d), times = times)
+  # In case semResult throws error
+  semResult <- tryCatch({time.sem <- microbenchmark::microbenchmark(out.sem <- sem(model = specifyModelSEM(B, Omega), data = d), times = times)
+  1}
+           , error = function(err)
+             {print("sem ERROR")
+             return(0)
+           }, finally ={
+               1
+             }
+           )
   
-  err <- norm(out.ricf$BHat - out.sem$A, type = "F") + norm(out.ricf$OmegaHat - out.sem$P, type = "F") /(sum(B)+sum(Omega))
-  agree <- err < tol
   
-  ret <- list(ricfTime = mean(time.ricf$time), ricfConv = out.ricf$Converged,
-                    semTime = mean(time.sem$time), semConv = out.sem$convergence,
-                    agree = agree, B = B, Omega = Omega, B.true = B.true, Omega.true = Omega.true)
+  if(semResult){
+    err <- norm(out.ricf$BHat - out.sem$A, type = "F") + norm(out.ricf$OmegaHat - out.sem$P, type = "F")
+    agree <- err < tol
+    
+    ret <- list(ricfTime = mean(time.ricf$time), ricfConv = out.ricf$Converged,
+                semTime = mean(time.sem$time), semConv = out.sem$convergence,
+                agree = err, B = B, Omega = Omega, B.true = B.true, Omega.true = Omega.true, Y = Y)
+    
+  } else {
+    ret <- list(ricfTime = mean(time.ricf$time), ricfConv = out.ricf$Converged,
+                semTime = -1, semConv = 0,
+                agree = 0, B = B, Omega = Omega, B.true = B.true, Omega.true = Omega.true, Y = Y)
+  }
+  
+  
   return(ret)
 }
 
