@@ -60,7 +60,7 @@ void lin_sem::initEst(double OmegaInitScale)
         }
     }
     
-    // punch 0's into the sample covariance and get eigen values    
+    // punch 0's into the sample covariance and get eigen values   
     OmegaInit = Omega % cov(resid.t());
     vec eigval = eig_sym( OmegaInit );
     
@@ -81,7 +81,7 @@ void lin_sem::initEst(double OmegaInitScale)
         //check for diagonal dominance in row i
         if(row_sum > OmegaInit(i,i))
         {
-          //scale down each element so that the sum of the off-diagonals is equal to (omega_ii * .9)
+          //scale down each element so that the sum of the off-diagonals is equal to (omega_ii * OmegaInitScale)
           for(j = 0; j < V; j++)
           {
             if(j != i){
@@ -92,11 +92,12 @@ void lin_sem::initEst(double OmegaInitScale)
         }
       }
     }
-    
-    
 }
 
 
+// Main function for lin_sem object
+// Updates relevant parameters for node i
+// takes node i and max condition number
 int lin_sem::updateNode(int i, double maxKappa)
 {
     // get parents and siblings

@@ -2,7 +2,8 @@
 
 #### Functions for SEM ####
 
-# specify covar argument given an Omega matrix
+# returns covar argument for sem::specifyModel function
+# Takes Omega Matrix of 1/0 specifying structural 0's in Bidirected Graph
 getCovar <- function(Omega){
   p <- nrow(Omega)
   covar <- c()
@@ -22,7 +23,9 @@ getCovar <- function(Omega){
   return(covar)
 }
 
-# specify a model argument given a B matrix
+# returns text argument for sem::specifyModel function
+# Takes B Matrix of 1/0 specifying structural 0's in Directed Graph
+# B_ij = 1 implies a directed edge from j -> i
 getMod <- function(B){
   p <- nrow(B)
   mod <- ""
@@ -44,18 +47,61 @@ getMod <- function(B){
 
 
 # wrapper function for sem's specifyModel
+# takes spec
 specifyModelSEM <- function(B, Omega){
   return(sem::specifyModel(text = getMod(B), exog.var = T, endog.var = T, covs = getCovar(Omega), quiet = T))
 }
 
+#### Mixed Method ####
+
+# returns text argument for sem::specifyModel
+# takes a ricf object out, B matrix, and Omega matrix
+specifyModelSEM_Mixed <- function(out, B, Omega)
+{
+  p <- nrow(B)
+  mod <- ""
+  first <- 1
+  for(i in 1:p){
+    for(j in 1:p){
+      if(B[i,j] == 1){
+        if(first){
+          mod <- paste("x", j, "->", "x",i,", beta",i,j,",", out$BHat[i,j], sep = "")
+          first <- 0 
+        } else {
+          mod <- paste(mod, "\n ","x", j, "->", "x",i,", beta",i,j,",", out$BHat[i,j], sep = "")
+        }
+      }
+      if(Omega[i,j] == 1 & i <= j){
+        if(first){
+          mod <- paste("x", j, "<->", "x",i,", omega",i,j,",", out$OmegaHat[i,j], sep = "")
+          first <- 0 
+        } else {
+          mod <- paste(mod, "\n ","x", j, "<->", "x",i,", omega",i,j,",", out$OmegaHat[i,j], sep = "")
+        }
+      }
+    }
+  }
+  return(mod)
+}
+
+
+# returns sem object af
+# Takes B, Omega and Y
+mixedMethod <- function(B, Omega, Y, ricfIter = 5, ricfTol = 1e-3){
+  p <- dim(B)[1]
+  out <- ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
+       OmegaInit = NULL, sigConv = 0, maxIter = ricfIter, msgs = FALSE, omegaInitScale = .9)
+  mod <- sem::specifyModel(text = specifyModelSEM_Mixed(out, B, Omega), quiet = T)
+  d <- as.data.frame(t(Y))
+  names(d) <- paste("x", c(1:p), sep = "")
+  ret <- sem::sem(model = mod, data = d)
+  return(ret)
+}
+
+
+
 
 ##### Simulation #####
-p <- 10
-n <- 500
-k <- 5
-d <- .2
-b <- d/2
-
 do.one <- function(p, n, k, d, b, times = 5, tol = 1e-2){
 
   # Setup B and Omega matrices
@@ -70,7 +116,8 @@ do.one <- function(p, n, k, d, b, times = 5, tol = 1e-2){
     }
     B[1, k] <- 1
   }
-  
+
+  # fill in remaining edges  
   for(i in 2:p)
   {
     for(j in 1:(i-1))
@@ -91,17 +138,16 @@ do.one <- function(p, n, k, d, b, times = 5, tol = 1e-2){
   
   # reorder the vertices
   reorder <- sample(p)
-  B <- B[reorder, ]
-  B <- B[, reorder]
-  Omega <- Omega[reorder, ]
-  Omega <- Omega[, reorder]
-  
+  B <- B[reorder, reorder]
+  Omega <- Omega[reorder, reorder]
+
   # Sample edge weights as given in the paper
   B.true <- matrix(rnorm(p^2), nrow = p) * B
   Omega.true <- matrix(rnorm(p^2), nrow = p)
   Omega.true[lower.tri(Omega.true, diag = F)] <- t(Omega.true)[lower.tri(Omega.true, diag = F)] 
   Omega.true <- Omega.true * Omega
   
+  # ensure Omega.true is PD by making it diagonally dominant
   for(i in 1:p){
     Omega.true[i,i] <- sum(abs(Omega.true[i, -i])) + 1 + rchisq(1, df = 1)
   }

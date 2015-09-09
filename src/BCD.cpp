@@ -23,14 +23,23 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
       //update nodes
       for(i = 0; i < graph.getV(); i++)
       {
-          if(!graph.updateNode(i, maxKap)){
-            return Rcpp::List::create(Rcpp::Named("SigmaHat", graph.getSigma()),
+          // check if node needs to be updated
+          // after the first pass, if there are no incident bidirected edges
+          // and no parents in a directed cycle, then the node does not need to be
+          // updated on subsequent passes and graph.SingleUpdateOnly(i) will be set to 1
+          if(!graph.singleUpdateOnly(i)){
+            
+            // Update node returns a 0 if the update is unsuccesful
+            // ie when the conditioning number is too large
+            // in this case, simply return current estimates
+            if(!graph.updateNode(i, maxKap)){
+              return Rcpp::List::create(Rcpp::Named("SigmaHat", graph.getSigma()),
                                       Rcpp::Named("OmegaHat", graph.getOmegaInit()),
                                       Rcpp::Named("BHat", graph.getBInit()),
                                       Rcpp::Named("Iter", counter),
-                                      Rcpp::Named("Converged", 0)
-            );
+                                      Rcpp::Named("Converged", 0));
           }
+        }
       }
       
       //update convergence criteria and counter
@@ -44,24 +53,37 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
     while(convCrit > tol && counter < maxIter){
       oldB = graph.getBInit();
       oldOmega = graph.getOmegaInit();
+      
+      
+      //update nodes
       for(i = 0; i < graph.getV(); i++)
       {
-        //check if the node needs to be updated
+        // check if node needs to be updated
+        // after the first pass, if there are no incident bidirected edges
+        // and no parents in a directed cycle, then the node does not need to be
+        // updated on subsequent passes and graph.SingleUpdateOnly(i) will be set to 1
+        if(!graph.singleUpdateOnly(i)){
+          
+          // Update node returns a 0 if the update is unsuccesful
+          // ie when the conditioning number is too large
+          // in this case, simply return current estimates
           if(!graph.updateNode(i, maxKap)){
             return Rcpp::List::create(Rcpp::Named("SigmaHat", graph.getSigma()),
-                                    Rcpp::Named("OmegaHat", graph.getOmegaInit()),
-                                    Rcpp::Named("BHat", graph.getBInit()),
-                                    Rcpp::Named("Iter", counter),
-                                    Rcpp::Named("Converged", 0)
-          );
+                                      Rcpp::Named("OmegaHat", graph.getOmegaInit()),
+                                      Rcpp::Named("BHat", graph.getBInit()),
+                                      Rcpp::Named("Iter", counter),
+                                      Rcpp::Named("Converged", 0));
+          }
         }
       }
-     
+      
      convCrit = norm(oldB - graph.getBInit(), "fro") + norm(oldOmega - graph.getOmegaInit(), "fro");
     counter++;
-    }
+    } //end while 
+    
   }
 
+    //while statmen terminates, return current estimates
     return Rcpp::List::create(Rcpp::Named("SigmaHat", graph.getSigma()),
                               Rcpp::Named("OmegaHat", graph.getOmegaInit()),
                               Rcpp::Named("BHat", graph.getBInit()),

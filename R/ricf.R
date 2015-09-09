@@ -32,6 +32,7 @@ ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
       stop("B must be a square matrix! the same size as Omega")
   
   if (msgs & sum(abs(B * Omega)) != 0) {
+    # only print if msgs = TRUE
     warning("The graph either contains a bow or a self-loop.",call. = FALSE, immediate. = TRUE)
   }	
   if (maxIter <= 0 || ceiling(maxIter) != maxIter)
@@ -39,7 +40,7 @@ ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
   if (tol <= 0)
     stop("A positive tolerance is needed for convergence to be possible!")
 
-  ret <- bcdC(B, Omega, BInit, OmegaInit, Y, maxIter = maxIter, sigConv = sigConv, maxKap = maxKap, tol= tol, omegaInitScale =omegaInitScale)
+  ret <- bcdC(B, Omega, BInit, OmegaInit, Y, maxIter = maxIter, sigConv = sigConv, maxKap = maxKap, tol = tol, omegaInitScale =omegaInitScale)
   
   return(ret)
 
