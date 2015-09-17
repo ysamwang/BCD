@@ -43,7 +43,7 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
       }
       
       //update convergence criteria and counter
-      convCrit = norm(oldSigma - graph.getSigma(), "fro");
+      convCrit =  accu(abs(oldSigma - graph.getSigma())) / (accu(graph.getB()) + accu(graph.getOmega()));
       counter ++;
     }
   } else {
@@ -77,7 +77,7 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
         }
       }
       
-     convCrit = norm(oldB - graph.getBInit(), "fro") + norm(oldOmega - graph.getOmegaInit(), "fro");
+    convCrit =  (accu(abs(oldB - graph.getBInit())) + accu(abs(oldOmega - graph.getOmegaInit()))) / (accu(graph.getB()) + accu(graph.getOmega()));
     counter++;
     } //end while 
     

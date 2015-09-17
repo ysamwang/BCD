@@ -1,4 +1,8 @@
 #### Simulation Helper File #####
+library(MASS)
+library(BCD)
+library(sem)
+library(microbenchmark)
 
 #### Functions for SEM ####
 
@@ -49,7 +53,7 @@ getMod <- function(B){
 # wrapper function for sem's specifyModel
 # takes spec
 specifyModelSEM <- function(B, Omega){
-  return(sem::specifyModel(text = getMod(B), exog.var = T, endog.var = T, covs = getCovar(Omega), quiet = T))
+  return(sem::specifyModel(text = getMod(B), exog.variances = T, endog.variances = T, covs = getCovar(Omega), quiet = T))
 }
 
 #### Mixed Method ####
@@ -87,10 +91,10 @@ specifyModelSEM_Mixed <- function(out, B, Omega)
 
 # returns sem object af
 # Takes B, Omega and Y
-mixedMethod <- function(B, Omega, Y, ricfIter = 5, ricfTol = 1e-3){
+mixedMethod <- function(B, Omega, Y, ricfIter = 10, ricfTol = 1e-6){
   p <- dim(B)[1]
   out <- ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
-       OmegaInit = NULL, sigConv = 0, maxIter = ricfIter, msgs = FALSE, omegaInitScale = .9)
+       OmegaInit = NULL, sigConv = 0, maxIter = ricfIter, msgs = FALSE, omegaInitScale = .9, tol = ricfTol)
   mod <- sem::specifyModel(text = specifyModelSEM_Mixed(out, B, Omega), quiet = T)
   d <- as.data.frame(t(Y))
   names(d) <- paste("x", c(1:p), sep = "")
@@ -102,8 +106,11 @@ mixedMethod <- function(B, Omega, Y, ricfIter = 5, ricfTol = 1e-3){
 
 
 ##### Simulation #####
-do.one <- function(p, n, k, d, b, times = 5, tol = 1e-2){
+do.one <- function(p, n, k, d, b, times = 5, tol = .5){
 
+  
+  #### Generate Model ####
+  
   # Setup B and Omega matrices
   B <- matrix(0, nrow = p, ncol = p)
   Omega <- diag(rep(1, p))
@@ -156,44 +163,66 @@ do.one <- function(p, n, k, d, b, times = 5, tol = 1e-2){
   # Sample data from multivariate normal and make mean 0
   Y <- t(MASS::mvrnorm(n = n, mu = rep(0, p), Sigma = sigma))
   Y <- Y - rowMeans(Y)
+
   
+
+
+   #### Run sem ####
+  dat <- as.data.frame(t(Y))
+  names(dat) <- paste("x", c(1:p), sep = "")
+  mod <- specifyModelSEM(B, Omega)
+  time.sem <- try(microbenchmark::microbenchmark(out.sem <- sem(model = mod, data = dat), times = times),
+                  silent = T)
   
-  ricfRres <- ricfR(O = Omega, X = t(Y), Linit = NULL, Oinit = NULL, sigconv=FALSE, B = B)
-  
-  time.ricf <- microbenchmark::microbenchmark(out.ricf <- ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
-                                               OmegaInit = NULL, sigConv = 0, maxIter =5000, msgs = FALSE, omegaInitScale = .9), times = times)
-  if(!out.ricf$Converged){
-    browser()
+  #### Run RICF ####
+  time.ricf <- try(microbenchmark::microbenchmark(out.ricf <- ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
+                                                                   OmegaInit = NULL, sigConv = 0, maxIter = 5000,
+                                                                   msgs = FALSE, omegaInitScale = .9)
+                                                  , times = times), silent = T)
+  if(class(time.ricf)[1] == "try-error")
+  {
+    time.ricf <- list(time = 0)
+    out.ricf <- list(Converged = 0)
   }
-  d <- as.data.frame(t(Y))
-  names(d) <- paste("x", c(1:p), sep = "")
   
-  # In case semResult throws error
-  semResult <- tryCatch({time.sem <- microbenchmark::microbenchmark(out.sem <- sem(model = specifyModelSEM(B, Omega), data = d), times = times)
-  1}
-           , error = function(err)
-             {print("sem ERROR")
-             return(0)
-           }, finally ={
-               1
-             }
-           )
+  if(class(time.sem)[1] == "try-error")
+  {
+    time.sem <- list(time = 0)
+    out.sem <- list(convergence = 0)
+  }  else if(any(eigen(out.sem$C)$values < 0 )){
+    time.sem <- list(time = 0)
+    out.sem <- list(convergence = 0)
+  }
   
   
-  if(semResult){
-    err <- norm(out.ricf$BHat - out.sem$A, type = "F") + norm(out.ricf$OmegaHat - out.sem$P, type = "F")
+   #### Run Mixed ####
+  time.mixed <- try(microbenchmark::microbenchmark(out.mixed <- mixedMethod(B, Omega, Y), times = times), silent = T)
+  
+  if(class(time.mixed)[1] == "try-error")
+  {
+    time.mixed <- list(time = 0)
+    out.mixed <- list(convergence = 0)
+  } else if(any(eigen(out.mixed$C)$values < 0 )){
+    time.mixed <- list(time = 0)
+    out.mixed <- list(convergence = 0)
+  }
+  
+  #### Post Processing
+  
+  if(out.ricf$Converged & out.sem$convergence){
+    err <- (sum(abs(out.ricf$BHat - out.sem$A)) + sum(abs(out.ricf$OmegaHat - out.sem$P ))) / sum(B + Omega)    
     agree <- err < tol
-    
-    ret <- list(ricfTime = mean(time.ricf$time), ricfConv = out.ricf$Converged,
-                semTime = mean(time.sem$time), semConv = out.sem$convergence,
-                agree = err, B = B, Omega = Omega, B.true = B.true, Omega.true = Omega.true, Y = Y)
-    
   } else {
-    ret <- list(ricfTime = mean(time.ricf$time), ricfConv = out.ricf$Converged,
-                semTime = -1, semConv = 0,
-                agree = 0, B = B, Omega = Omega, B.true = B.true, Omega.true = Omega.true, Y = Y)
+    err <- -1
+    agree <- 0
   }
-  
+  if(is.na(agree))
+  {}
+
+  ret <- list(ricfTime = mean(time.ricf$time), ricfConv = out.ricf$Converged,
+                semTime = mean(time.sem$time), semConv = out.sem$convergence,
+                mixedTime = mean(time.mixed$time), mixedConv = out.mixed$convergence,
+                agree = agree, B = B, Omega = Omega, B.true = B.true, Omega.true = Omega.true, Y = Y)
   
   return(ret)
 }

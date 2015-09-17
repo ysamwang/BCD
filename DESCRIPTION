@@ -1,11 +1,11 @@
 Package: BCD
 Type: Package
-Title: Fit Cyclic Linear Structural Equation Models through algorithim outlined in DFW
-Version: 1.0
+Title: Linear Structural Equations with Gaussian Errors
+Version: 0.0.99
 Date: 2015-08-18
-Author: Your Name
-Maintainer: Your Name <your@email.com>
-Description: Linear Non-recursive SEMs
+Authors: c(person("Christopher", "Fox", role = "aut", comment = "original R functions"), person("Y. Samuel", "Wang", role = "aut", comment = "Rcpp implementation", email = "ysamwang@uw.edu"), person("Mathias", "Drton", role = "aut"))
+Maintainer: Y. Samuel Wang <ysamwang@uw.edu>
+Description: Estimate mixed linear structural equation models without latent    variables. The structural equation model can be recursive (acyclic) or non-   recursive (cyclic).
 License: GPL (>= 2)
-Imports: Rcpp (>= 0.11.6)
-LinkingTo: Rcpp, RcppArmadillo
+Imports: Rcpp (>= 0.12.0)
+LinkingTo: Rcpp, RcppArmadillo (>= 0.5.400.2.0)

@@ -307,3 +307,11 @@ int lin_sem::singleUpdateOnly(int i)
 {
   return (int) singleUpdates[i];
 }
+
+mat lin_sem::getB(){
+  return B;
+}
+
+mat lin_sem::getOmega(){
+  return Omega;
+}

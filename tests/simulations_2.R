@@ -2,10 +2,10 @@
 source("tests/simHelper.R")
 
 
-v <- c(rep(10, 12), rep(20, 12))
-n <- c(rep(15, 6), rep(100, 6), rep(30, 6), rep(200, 6))
-k <- c(rep(rep(c(0,2,4), each = 2),2), rep(rep(c(0,4,8), each = 2),2))
-d <- rep(c(.1, .2), 12)
+v <- c(rep(50, 12), rep(100, 12))
+n <- c(rep(100, 6), rep(200, 6), rep(20, 6), rep(400, 6))
+k <- c(rep(rep(c(10,20,30), each = 2),2), rep(rep(c(20,40,60), each = 2),2))
+d <- rep(c(.3, .5), 12)
 paramSettings <- data.frame(v = v, n = n, k = k, d = d)    
 results <- data.frame(bcdConv = rep(0, dim(paramSettings)[1]),
                       semConv = rep(0, dim(paramSettings)[1]),
@@ -19,11 +19,11 @@ results <- data.frame(bcdConv = rep(0, dim(paramSettings)[1]),
                       semTimeComparison = rep(0, dim(paramSettings)[1]),
                       mixedTimeComparison = rep(0, dim(paramSettings)[1]))
 
-set.seed(111)
+set.seed(1001)
 
 
-sim.size <- 1000
-
+sim.size <- 200
+j <- 1
 
 for(j in 1:dim(paramSettings)[1]){
   print(paste("Setting", j, sep = " "))
@@ -31,7 +31,9 @@ for(j in 1:dim(paramSettings)[1]){
   
   ricfTime <- semTime <- mixedTime <- ricfConv <- semConv <- mixedConv <- agree <- rep(0, sim.size)
   for(i in 1:sim.size){
-    cat(paste (".", ifelse(i%%50==0,i,""), sep = ""))
+    if(i %%100 == 0){
+      cat(paste (i/sim.size *100, "%  ", sep = ""))
+    }
     ret <- do.one(paramSettings[j,1], paramSettings[j,2], paramSettings[j,3], paramSettings[j,4], paramSettings[j,4]/2, times = 1)
     ricfTime[i] <- ret$ricfTime
     semTime[i] <- ret$semTime
@@ -56,10 +58,4 @@ for(j in 1:dim(paramSettings)[1]){
   cat("\n")
 }
 
-# saveRDS(results, "data/table3.RDS")
-
-results <- readRDS("data/table3.RDS")
-results[,6:11] <- results[,6:11] * 1e-6
-tab <- cbind(paramSettings, results[-c(3,6:8,11)])
-library(xtable)
-print(xtable(tab, digits = c(0,0,0,0,1,0,0,0,0,1,1)), include.rownames =F)
+# tab <- cbind(paramSettings, results)
