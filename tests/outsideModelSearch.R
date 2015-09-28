@@ -6,7 +6,7 @@ V <- 5
 n <- 10
 counter <- 0
 tries <- 0
-d <- .3
+d <- .2
 b <- d/2
 set.seed(1001)
 while(0 < 1){
@@ -27,24 +27,25 @@ while(0 < 1){
         }
       }
     }
-  out <- ricf(B = B, Omega = Omega, maxIter = 200000, Y = Y)
+  out <- ricf(B = B, Omega = Omega, maxIter = 500000, Y = Y)
   tries <- tries + 1
-  if(tries %% 100 == 0){
+  if(tries %% 1000 == 0){
     cat(".")
   }
   if(!out$Converged){
-    if(max(abs(out$BHat)) > 50000 | max(abs(out$OmegaHat))  > 50000){
+    if(max(abs(out$BHat)) > 100000 | max(abs(out$OmegaHat))  > 100000){
       counter <- counter + 1
       cat(paste("\n Non-Convergence:", counter, "\n"))
-      saveRDS(list(out2, sigma, Y, B, Omega), paste("nonConverged", counter,".RDS", sep = ""))
+      saveRDS(list(out, sigma, Y, B, Omega), paste("nonConverged", counter,".RDS", sep = ""))
     }
   }
 }
 
-failure <- readRDS("nonConverged1.RDS")
-
-out <- ricf(B = failure[[4]], Omega = failure[[5]],
-            Y = failure[[3]], maxIter = 1000000)
+failure <- readRDS("nonConverged2.RDS")
+outEst <- failure[[1]]
+outEst$OmegaHat
+outEst$BHat
+out <- ricf(failure[[4]], failure[[5]], failure[[3]], failure[[1]]$BHat,failure[[1]]$OmegaHat, maxIter = 1000000)
 out$Converged
 out$OmegaHat
-
+out$BHat
