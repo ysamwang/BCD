@@ -5,7 +5,7 @@ bcdC <- function(Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, t
     .Call('BCD_bcdC', PACKAGE = 'BCD', Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, tol, omegaInitScale)
 }
 
-sem_el_fitC <- function(y_r, b_r, omega_r, b_weights_r, omega_weights_r, d_r, lambda_r, gamma_r, v, tol, max_iter) {
-    .Call('BCD_sem_el_fitC', PACKAGE = 'BCD', y_r, b_r, omega_r, b_weights_r, omega_weights_r, d_r, lambda_r, gamma_r, v, tol, max_iter)
+sem_el_fitC <- function(y_r, b_r, omega_r, b_weights_r, d_r, lambda_r, gamma_r, v, tol, max_iter) {
+    .Call('BCD_sem_el_fitC', PACKAGE = 'BCD', y_r, b_r, omega_r, b_weights_r, d_r, lambda_r, gamma_r, v, tol, max_iter)
 }
 
