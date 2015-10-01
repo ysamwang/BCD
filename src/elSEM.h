@@ -13,9 +13,10 @@ class el_sem
 {
 public:
     // Initialize sem object:
-    el_sem(SEXP y_r, SEXP b_r, SEXP omega_r, SEXP b_weights_r, SEXP d_r, double alpha_r, lambda_r, SEXP gamma_r, int v_r);
+    el_sem(SEXP y_r, SEXP b_r, SEXP omega_r, SEXP b_weights_r, SEXP d_r,SEXP lambda_r, SEXP gamma_r, int v_r);
     void update_lambda_gamma(double tol, int max_iter);
     double get_objective();
+    vec get_d();
 
 protected:
     mat y_; // p by n data matrix
@@ -35,7 +36,8 @@ protected:
     int n_;
 
     void set_d_star();
-    void set_gradient_hessian(vec &grad, mat &hessian);
+    void set_gradient_hessian(vec &grad, mat &hessian, double b);
+    int backtracking(vec update);
 
 private:
 };

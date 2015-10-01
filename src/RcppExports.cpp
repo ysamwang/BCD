@@ -27,7 +27,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // sem_el_fitC
-double sem_el_fitC(SEXP y_r, SEXP b_r, SEXP omega_r, SEXP b_weights_r, SEXP d_r, SEXP lambda_r, SEXP gamma_r, int v, double tol, int max_iter);
+SEXP sem_el_fitC(SEXP y_r, SEXP b_r, SEXP omega_r, SEXP b_weights_r, SEXP d_r, SEXP lambda_r, SEXP gamma_r, int v, double tol, int max_iter);
 RcppExport SEXP BCD_sem_el_fitC(SEXP y_rSEXP, SEXP b_rSEXP, SEXP omega_rSEXP, SEXP b_weights_rSEXP, SEXP d_rSEXP, SEXP lambda_rSEXP, SEXP gamma_rSEXP, SEXP vSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
