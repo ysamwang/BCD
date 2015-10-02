@@ -1,19 +1,15 @@
 #include "elSEM.h"
 
-el_sem::el_sem(SEXP y_r, SEXP b_r, SEXP omega_r, SEXP b_weights_r, SEXP d_r, SEXP lambda_r, SEXP gamma_r, int v_r)
+el_sem::el_sem(SEXP y_r, SEXP omega_r, SEXP b_weights_r, SEXP dual_r, int v_r)
 {
     y_ = as<arma::mat>(y_r);
     n_ = y_.n_cols;
-    b_ = as<arma::mat>(b_r);
     omega_ = as<arma::mat>(omega_r);
     b_weights_ = as<arma::mat>(b_weights_r);
-    d_ = as<arma::vec>(d_r);
-    lambda_ = as<arma::vec>(lambda_r);
-    gamma_ = as<arma::vec>(gamma_r);
+    dual_ = as<arma::vec>(dual_r);
     v_ = v_r;
 
     gamma_indices_ = arma::find(trimatu(omega_ == 0 ));
-    Rcout <<trimatu(omega_ == 0 ) <<endl;
     residuals_ = (eye(v_, v_) - b_weights_) * y_ ;
     cross_terms_.zeros(gamma_indices_.n_elem, n_);
 
@@ -23,17 +19,15 @@ el_sem::el_sem(SEXP y_r, SEXP b_r, SEXP omega_r, SEXP b_weights_r, SEXP d_r, SEX
         i = (int) gamma_indices_(k) % v_;
         cross_terms_.row(k) = residuals_.row(i) % residuals_.row(j);
     }
+    constraints_ = join_cols(residuals_, cross_terms_);
+    d_ = (constraints_.t() * dual_) + 1.0;
 }
 
-void el_sem::update_lambda_gamma(double tol, int max_iter)
+double el_sem::update_dual(double tol, int max_iter)
 {
     double conv_crit = 1.0;
     int counter = 0;
-    double old_obj, new_obj;
-    new_obj = get_objective();
-    double b = 100000.0;
-    double backtracking_scaling_const = .8;
-    vec ret(max_iter);
+    double backtracking_scaling_const = .7;
 
     //pre-allocate memory for gradient, hessian and update
     vec grad(v_ + gamma_indices_.n_elem );
@@ -47,7 +41,7 @@ void el_sem::update_lambda_gamma(double tol, int max_iter)
 
 
         // build in backtracking if necessary
-        set_gradient_hessian(grad, hessian, b);
+        set_gradient_hessian(grad, hessian);
 
 //        Rcout << "Hessian: " <<endl << hessian <<endl;
 //        Rcout << "Grad: " <<endl <<grad <<endl;
@@ -56,79 +50,45 @@ void el_sem::update_lambda_gamma(double tol, int max_iter)
 
         // back tracking line search
 
-        update =  join_cols(lambda_, gamma_) - solve(hessian, grad);
-        int counterB = 0;
+        update = solve(hessian, grad);
         while(!backtracking(update)){
             update *= backtracking_scaling_const;
-            counterB ++;
         }
+        dual_ = dual_ - update;
 
-        lambda_ = update.rows(0, v_ - 1);
-        gamma_ = update.rows(v_, v_ + gamma_indices_.n_elem - 1);
-        set_d_star();
-//        conv_crit = fabs((new_obj - old_obj)/old_obj);
-        conv_crit = norm( grad ,2);
+        conv_crit = norm(grad ,2);
         counter++;
-        Rcout << "Iter: " << counter << " Backtracks: " <<counterB <<endl;
-        Rcout  << "Sum: "  << sum(1.0 / d_) <<std::endl;
-        Rcout << d_ <<std::endl;
-        Rcout  << "Conv Criteria: " << conv_crit <<std::endl;
-        Rcout << "Objective: " << get_objective() <<std::endl;
-
     }
+
+    d_ = (constraints_.t() * dual_) + 1.0;
+    if(conv_crit < tol){
+        return -sum(log(n_ * d_));
+    } else {
+        return -9999;
+    }
+
 }
-
-void el_sem::set_d_star()
-{
-    d_.ones();
-    // term from
-    d_ += (lambda_.t() * residuals_).t();
-    d_ += (gamma_.t() * cross_terms_).t();
-    d_ *= 1.0 / n_;
- }
-
 
 int el_sem::backtracking(vec update)
 {
-    vec d = d_;
-    d.ones();
-    // term from
-    d += (update.subvec(0, v_ - 1).t() * residuals_).t();
-    d += (update.subvec(v_, v_ + gamma_indices_.n_elem - 1).t() * cross_terms_).t();
-    return all(d > (1.0 / n_));
+  vec d = (constraints_.t() * (dual_ + update)) + 1.0;
+  return all( d > (1.0 / n_));
 }
 
-
-double el_sem::get_objective()
+void el_sem::set_gradient_hessian(vec &grad, mat &hessian)
 {
-    return -sum(log(d_));
-}
-
-
-void el_sem::set_gradient_hessian(vec &grad, mat &hessian, double b)
-{
-    mat cross_terms_divided = cross_terms_;
-    cross_terms_divided.each_row() /= d_.t();
-//    mat penalty_term_gamma = cross_terms_;
-//    penalty_term_gamma.each_row() /= (b * (d_.t() - 1.0 / n_));
-
-    mat residuals_divided_by_d = residuals_;
-    residuals_divided_by_d.each_row() /= d_.t();
-//    mat penalty_term_lambda = residuals_;
-//    penalty_term_lambda.each_row() /= (b * (d_.t() - 1.0 / n_));
-
-    grad.rows(0, v_ - 1) = -sum(residuals_divided_by_d, 1);// - penalty_term_lambda, 1);
-    grad.rows(v_, v_ + gamma_indices_.n_elem - 1) = -sum(cross_terms_divided,1 ); // - penalty_term_gamma, 1);
-
-
-    hessian.submat(0, 0, v_ - 1, v_ - 1) = residuals_divided_by_d * residuals_divided_by_d.t(); //+ penalty_term_lambda * penalty_term_lambda.t();
-    hessian.submat(0, v_ , v_ - 1,  v_ + gamma_indices_.n_elem - 1) = residuals_divided_by_d * cross_terms_divided.t(); // + penalty_term_lambda * penalty_term_gamma.t() ;
-    hessian.submat(v_, 0, v_ + gamma_indices_.n_elem - 1, v_ - 1) =  hessian.submat(0, v_ , v_ - 1,  v_ + gamma_indices_.n_elem - 1).t();
-    hessian.submat(v_,  v_, v_ + gamma_indices_.n_elem -1, v_ + gamma_indices_.n_elem - 1) = cross_terms_divided * cross_terms_divided.t();// + penalty_term_gamma * penalty_term_gamma.t();
-
+    int i;
+    grad.zeros();
+    hessian.zeros();
+    for(i = 0; i < n_ ; i ++)
+    {
+        d_.row(i) = 1.0 + (dual_.t() * constraints_.col(i));
+        grad -=  constraints_.col(i) / d_(i);
+        hessian += constraints_.col(i) * constraints_.col(i).t() / pow(d_(i),2);
+    }
 }
 
 vec el_sem::get_d()
 {
-    return d_;
+    return d_ * n_;
 }

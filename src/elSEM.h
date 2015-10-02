@@ -13,33 +13,29 @@ class el_sem
 {
 public:
     // Initialize sem object:
-    el_sem(SEXP y_r, SEXP b_r, SEXP omega_r, SEXP b_weights_r, SEXP d_r,SEXP lambda_r, SEXP gamma_r, int v_r);
-    void update_lambda_gamma(double tol, int max_iter);
-    double get_objective();
+    el_sem(SEXP y_r, SEXP omega_r, SEXP b_weights_r, SEXP dual_r, int v_r);
+    double update_dual(double tol, int max_iter);
     vec get_d();
 
 protected:
     mat y_; // p by n data matrix
     mat omega_; // matrix of 1's and 0's representing bi-directed edge structure
-    mat b_; // matrix of 1's and 0's representing directed edge structure
     mat b_weights_; // matrix of directed egdge weights
     vec d_; //vector of denominators of p_n (ie p_n = 1 / d_(n))
-    double alpha_;
-    vec lambda_; // dual variable for mean restrictions
-    vec gamma_; //dual variable for covariance restrictions
+    vec dual_; // dual variables
 
     mat residuals_;
     uvec gamma_indices_;
     mat cross_terms_;
+    mat constraints_;
 
     int v_;
     int n_;
 
-    void set_d_star();
-    void set_gradient_hessian(vec &grad, mat &hessian, double b);
+    void set_gradient_hessian(vec &grad, mat &hessian);
     int backtracking(vec update);
 
 private:
 };
-#endif // LINSEM_H
+#endif // ELSEM_H
 

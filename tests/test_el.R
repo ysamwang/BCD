@@ -5,7 +5,7 @@ library(MASS)
 library(microbenchmark)
 set.seed(100)
 V <- 5
-n <- 10
+n <- 30
 B <- matrix(c(0,1,0,0,0,
               0,0,1,0,0,
               0,0,0,1,0,
@@ -66,10 +66,8 @@ Y <- t(mvrnorm(n = n, mu = rep(0, V), Sigma = sigma))
 # 
 # 
 
-res <- sem_el_fitC(y_r = Y, b_r = B, omega_r = Omega,
+library(microbenchmark)
+sem_el_fitC(y_r = Y, omega_r = Omega,
             b_weights_r = B.true, d_r = rep(n, n),
-            lambda_r = rep(0, V), gamma_r = rep(0, sum(Omega == 0)/2), v = V, tol = 1e-6, max_iter = 300)
-
-
-
+            dual_r = rep(0, V + sum(Omega == 0)/2), v = V, tol = 1e-6, max_iter = 100)
 
