@@ -1,62 +1,64 @@
-#### BCD Test File ####
-
-# True Values acyclic B
-library(MASS)
+#### Testing Empirical Likelihood for Structural Equation Models ####
+source("tests/simHelper.R")
 library(microbenchmark)
-set.seed(100)
-V <- 20
-n <- 750
 
-B <- matrix(0, nrow = V, ncol = V)
-for(i in 2:V)
+set.seed(101)
+V <- 10
+n <- 200
+k <- 5
+b <- .2
+d <- .2
+
+sim.size <- 200
+times <- times_naive <- rep(0, sim.size)
+
+for(sim in 1:sim.size)
 {
-  B[i-1, i] = 1
-}
-B[V, 1] = 1
-
-Omega <- matrix(0, nrow = V, ncol = V)
-Omega[upper.tri(Omega, diag = F)] <- rbinom(size = 1, prob = .5, n = V * (V-1)/ 2)
-Omega[c(B)== 1] <- 0
-Omega = Omega + t(Omega) + diag(rep(1, V))
-
-B.true <- matrix(rnorm(V^2, mean = 0, sd = 3), nrow = V) * B
-Omega.true <- ifelse(Omega,runif(V^2, -1, 1),0) + diag(rep(4, V))
-Omega.true[lower.tri(Omega.true,diag=T)] = 0
-Omega.true = Omega.true + t(Omega.true)
-Omega.true = Omega.true + diag(rowSums(abs(Omega.true)) + rchisq(dim(Omega.true)[1], df = 1))
-
-sigma = solve(diag(rep(1, V)) - B.true) %*% Omega.true %*% t(solve(diag(rep(1, V)) - B.true))
-sum(eigen(sigma)$values < 0)
-
-Y <- t(mvrnorm(n = n, mu = rep(0, V), Sigma = sigma))
-Y <- Y - rowMeans(Y)
-
-#####
-
-microbenchmark(sem_el_fit_obj(b_weights_r = c(B.true[B == 1]), y_r = Y, omega_r = Omega,
-               b_r = B, dual_r = rep(0, V + sum(Omega == 0)/2), tol = 1e-6, max_iter = 100), times = 5)
-omeg_weights <- c()
-for(j in 1:V){
-  for(i in j:V){
-    if(Omega[i,j] ==1){
-      omeg_weights <- c(omeg_weights, Omega.true[i,j])
+  mod <- generateModel(v = V, n = n, k = k, b = b, d = d)
+  
+  out_ricf <- ricf(B = mod$B, Omega = mod$Omega, Y = mod$Y, BInit = NULL,
+                               OmegaInit = NULL, sigConv = 0, maxIter = 500,
+                               msgs = FALSE, omegaInitScale = .9)
+  
+  
+  num_dual_vars = V + sum(mod$Omega == 0)/2
+  init_val = c(out_ricf$BHat[mod$B==1])
+  
+  # fitted_init <- sem_el_fit_weights(init_val,y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
+  #                    dual_r = rep(0, num_dual_vars), tol = 1e-6, max_iter = 100)
+  
+  mb <- microbenchmark(optim_out <- optim(par = init_val, fn = sem_el_fit_obj, gr = NULL,
+        y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
+        dual_r = rep(0, num_dual_vars), tol = 1e-6, max_iter = 100,
+        method = "BFGS", control = list(fnscale = -1))
+        , times = 1, control = list(warmpup = 1))
+  
+  
+  fitted_mod <- sem_el_fit_weights(optim_out$par,y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
+                                   dual_r = rep(0, num_dual_vars), tol = 1e-6, max_iter = 100)
+  
+  omeg_weights <- c()
+  for(i in 1:V){
+    for(j in i:V){
+      if(mod$Omega[i,j] == 1)
+      {
+        omeg_weights <- c(omeg_weights, out_ricf$OmegaHat[i,j])
+      }
     }
   }
+  
+  init_val_naive = c(out_ricf$BHat[mod$B==1], omeg_weights)
+  
+  num_dual_vars_naive = V + V * (V + 1) / 2
+  mb_naive <- microbenchmark(optim_out_naive <- optim(par = init_val_naive, fn = sem_el_naive_fit_obj, gr = NULL,
+               y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
+               dual_r = rep(0, num_dual_vars_naive), tol = 1e-6, max_iter = 100,
+               method = "BFGS", control = list(fnscale = -1)),
+               times = 1, control = list(warmpup = 1))
+  
+  fitted_mod_naive <- sem_el_naive_fit_weights(optim_out_naive$par,y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
+                                   dual_r = rep(0, num_dual_vars_naive), tol = 1e-6, max_iter = 100)
+
+  times[sim] <- mb$time * (optim_out$convergence == 0) * (sum(1/fitted_mod$d) == 1)
+  times_naive[sim] <- mb_naive$time  * (optim_out_naive$convergence == 0) * (sum(1/fitted_mod_naive$d) == 1)
 }
-microbenchmark(sem_el_naive_fit_obj(weights_r = c(B.true[B == 1], omeg_weights), y_r = Y, omega_r = Omega, 
-                              b_r = B, dual_r = rep(0, V + V*(V+1)/2), tol = 1e-6, max_iter = 100), times = 5)
-out <- sem_el_fit_weights(b_weights_r = c(B.true[B == 1]), y_r = Y, omega_r = Omega,
-                      b_r = B, dual_r = rep(0, V + sum(Omega == 0)/2), tol = 1e-6, max_iter = 100)
-
-out.naive <- sem_el_naive_fit_weights(weights_r = c(B.true[B == 1], omeg_weights), y_r = Y, omega_r = Omega, 
-                     b_r = B, dual_r = rep(0, V + V*(V+1)/2), tol = 1e-6, max_iter = 100)
-#####
-st <- proc.time()
-optim(c(B.true[B == 1]), sem_el_fit_obj, gr = NULL, y_r = Y, omega_r = Omega,
-      b_r = B, dual_r = rep(0, V + sum(Omega == 0)/2), tol = 1e-6, max_iter = 100, method = "Nelder-Mead")
-end <- proc.time()
-
-st.naive <-proc.time()
-optim(c(B.true[B == 1], omeg_weights), sem_el_fit_obj, gr = NULL, y_r = Y, omega_r = Omega, 
-      b_r = B, dual_r = rep(0, V + V*(V+1)/2), tol = 1e-6, max_iter = 100, method = "Nelder-Mead")
-end.naive <- proc.time()

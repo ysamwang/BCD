@@ -29,7 +29,7 @@ el_sem_naive::el_sem_naive(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SE
     constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights) * y;
     int i,j,k;
     k = v_;
-    for(i = 0; i < v_; i++){
+    for(i = 0; i < v_; i++) {
         for(j = 0; j <= i; j++ ) {
             constraints_.row(k) =  (y.row(i) % y.row(j)) - sigma_(i,j);
             k++;
@@ -40,7 +40,6 @@ el_sem_naive::el_sem_naive(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SE
 
 double el_sem_naive::update_dual(double tol, int max_iter)
 {
-    double backtracking_scaling_const = .7;
 
     //pre-allocate memory for gradient, hessian and update
     vec grad(v_ + (v_ *(v_ + 1) )/ 2 );
@@ -49,6 +48,11 @@ double el_sem_naive::update_dual(double tol, int max_iter)
     grad.zeros();
     hessian.zeros();
     update.zeros();
+
+    // backtracking parameters
+    double backtracking_scaling_const = .4;
+    int back_tracking_counter;
+    int max_back_track = 20; // steps required to scale update by 1e-8
 
     while(conv_crit_ > tol && counter_ < max_iter) {
 
@@ -59,17 +63,28 @@ double el_sem_naive::update_dual(double tol, int max_iter)
         // back tracking line search
 
         update = solve(hessian, grad);
-        while(!backtracking(update)){
+
+        //back track to ensure everything is greater than 1/n
+        back_tracking_counter = 0;
+        while(!backtracking(update) && back_tracking_counter < max_back_track) {
             update *= backtracking_scaling_const;
+            back_tracking_counter++;
         }
-        dual_ -= update;
+        //if back tracking does not terminate because of max iterations update
+        //else terminate
+        if(back_tracking_counter < max_back_track) {
+            dual_ -= update;
+        } else {
+            return -99999;
+        }
+
 
         conv_crit_ = norm(grad ,2);
         counter_++;
     }
 
     d_ = (constraints_.t() * dual_) + 1.0;
-    if(conv_crit_ < tol){
+    if(conv_crit_ < tol) {
         return -sum(log(n_ * d_));
     } else {
         return -999999999;
@@ -77,12 +92,15 @@ double el_sem_naive::update_dual(double tol, int max_iter)
 
 }
 
+// check that update preserves all(d_ > 1/n)
 int el_sem_naive::backtracking(vec update)
 {
-  vec d = (constraints_.t() * (dual_ - update)) + 1.0;
-  return all( d > (1.0 / n_));
+    vec d = (constraints_.t() * (dual_ - update)) + 1.0;
+    return all( d > (1.0 / n_));
 }
 
+
+//update gradient and hessian
 void el_sem_naive::set_gradient_hessian(vec &grad, mat &hessian)
 {
     int i;
@@ -90,22 +108,25 @@ void el_sem_naive::set_gradient_hessian(vec &grad, mat &hessian)
     d_ = (constraints_.t() * dual_) + 1.0;
     grad = -sum( constraints_ * diagmat( 1.0 / d_), 1);
 
-    for(i = 0; i < n_ ; i ++)
-    {
+    for(i = 0; i < n_ ; i ++) {
         hessian += constraints_.col(i) * constraints_.col(i).t() / pow(d_(i),2);
     }
 }
 
+
+//return scaled d
 vec el_sem_naive::get_d()
 {
     return d_ * n_;
 }
 
+//return convergence criteria
 double el_sem_naive::get_conv_crit()
 {
     return conv_crit_;
 }
 
+//return iterations used
 int el_sem_naive::get_iter()
 {
     return counter_;
