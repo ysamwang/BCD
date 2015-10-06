@@ -4,20 +4,22 @@
 library(MASS)
 library(microbenchmark)
 set.seed(100)
-V <- 5
-n <- 30
-B <- matrix(c(0,1,0,0,0,
-              0,0,1,0,0,
-              0,0,0,1,0,
-              0,0,0,0,1,
-              1,0,0,0,0), nrow = V, byrow = T)
+V <- 20
+n <- 750
 
-Omega <- matrix(1, nrow = V, ncol = V)
-Omega[1,3] <- Omega[3,1] <- 0
-Omega[1,4] <- Omega[4,1] <- 0
+B <- matrix(0, nrow = V, ncol = V)
+for(i in 2:V)
+{
+  B[i-1, i] = 1
+}
+B[V, 1] = 1
 
+Omega <- matrix(0, nrow = V, ncol = V)
+Omega[upper.tri(Omega, diag = F)] <- rbinom(size = 1, prob = .5, n = V * (V-1)/ 2)
+Omega[c(B)== 1] <- 0
+Omega = Omega + t(Omega) + diag(rep(1, V))
 
-B.true <- matrix(rnorm(V^2), nrow = V) * B
+B.true <- matrix(rnorm(V^2, mean = 0, sd = 3), nrow = V) * B
 Omega.true <- ifelse(Omega,runif(V^2, -1, 1),0) + diag(rep(4, V))
 Omega.true[lower.tri(Omega.true,diag=T)] = 0
 Omega.true = Omega.true + t(Omega.true)
@@ -27,47 +29,34 @@ sigma = solve(diag(rep(1, V)) - B.true) %*% Omega.true %*% t(solve(diag(rep(1, V
 sum(eigen(sigma)$values < 0)
 
 Y <- t(mvrnorm(n = n, mu = rep(0, V), Sigma = sigma))
-# obj_given_B <- function(dual_var, B, Y, omega_rows, omega_cols)
-# {
-#   resid = (diag(rep(1, dim(B)[1])) - B) %*% Y
-#   cross = resid[omega_rows, ] * resid[omega_cols, ]
-#   pn = 1 / (dim(Y)[2]*(1 + dual_var %*% rbind(resid, cross) ))
-#   return(-prod(pn))
-# }
-# 
-# get_pn <- function(dual_var, B, Y, omega_rows, omega_cols)
-# {
-#   resid = (diag(rep(1, dim(B)[1])) - B) %*% Y
-#   cross = resid[omega_rows, ] * resid[omega_cols, ]
-#   pn = 1 / (dim(Y)[2]*(1 + dual_var %*% rbind(resid, cross) ))
-#   return(pn)
-# }
-# 
-# 
-# 
-# omega_rows <- c()
-# omega_cols <- c()
-# for(i in 2:V)
-# {
-#   for(j in 1:i)
-#   {
-#     if(Omega[i,j] == 0)
-#     {
-#       omega_rows <- c(omega_rows, i)
-#       omega_cols <- c(omega_cols, j)
-#     }
-#   }
-# }
-# num_vars = V + sum(Omega[upper.tri(Omega, diag = F)] == 0)
-# res <- optim(par = rep(0, num_vars), fn = obj_given_B, gr = NULL, B.true, Y, omega_rows, omega_cols, method = "BFGS")
-# p_star <- get_pn(res$par, B.true, Y, omega_rows, omega_cols)
-# 
-# 
-# 
-# 
+Y <- Y - rowMeans(Y)
 
-library(microbenchmark)
-sem_el_fitC(y_r = Y, omega_r = Omega,
-            b_weights_r = B.true, d_r = rep(n, n),
-            dual_r = rep(0, V + sum(Omega == 0)/2), v = V, tol = 1e-6, max_iter = 100)
+#####
 
+microbenchmark(sem_el_fit_obj(b_weights_r = c(B.true[B == 1]), y_r = Y, omega_r = Omega,
+               b_r = B, dual_r = rep(0, V + sum(Omega == 0)/2), tol = 1e-6, max_iter = 100), times = 5)
+omeg_weights <- c()
+for(j in 1:V){
+  for(i in j:V){
+    if(Omega[i,j] ==1){
+      omeg_weights <- c(omeg_weights, Omega.true[i,j])
+    }
+  }
+}
+microbenchmark(sem_el_naive_fit_obj(weights_r = c(B.true[B == 1], omeg_weights), y_r = Y, omega_r = Omega, 
+                              b_r = B, dual_r = rep(0, V + V*(V+1)/2), tol = 1e-6, max_iter = 100), times = 5)
+out <- sem_el_fit_weights(b_weights_r = c(B.true[B == 1]), y_r = Y, omega_r = Omega,
+                      b_r = B, dual_r = rep(0, V + sum(Omega == 0)/2), tol = 1e-6, max_iter = 100)
+
+out.naive <- sem_el_naive_fit_weights(weights_r = c(B.true[B == 1], omeg_weights), y_r = Y, omega_r = Omega, 
+                     b_r = B, dual_r = rep(0, V + V*(V+1)/2), tol = 1e-6, max_iter = 100)
+#####
+st <- proc.time()
+optim(c(B.true[B == 1]), sem_el_fit_obj, gr = NULL, y_r = Y, omega_r = Omega,
+      b_r = B, dual_r = rep(0, V + sum(Omega == 0)/2), tol = 1e-6, max_iter = 100, method = "Nelder-Mead")
+end <- proc.time()
+
+st.naive <-proc.time()
+optim(c(B.true[B == 1], omeg_weights), sem_el_fit_obj, gr = NULL, y_r = Y, omega_r = Omega, 
+      b_r = B, dual_r = rep(0, V + V*(V+1)/2), tol = 1e-6, max_iter = 100, method = "Nelder-Mead")
+end.naive <- proc.time()

@@ -5,7 +5,19 @@ bcdC <- function(Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, t
     .Call('BCD_bcdC', PACKAGE = 'BCD', Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, tol, omegaInitScale)
 }
 
-sem_el_fitC <- function(y_r, omega_r, b_weights_r, d_r, dual_r, v, tol, max_iter) {
-    .Call('BCD_sem_el_fitC', PACKAGE = 'BCD', y_r, omega_r, b_weights_r, d_r, dual_r, v, tol, max_iter)
+sem_el_fit_obj <- function(b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter) {
+    .Call('BCD_sem_el_fit_obj', PACKAGE = 'BCD', b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter)
+}
+
+sem_el_fit_weights <- function(b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter) {
+    .Call('BCD_sem_el_fit_weights', PACKAGE = 'BCD', b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter)
+}
+
+sem_el_naive_fit_obj <- function(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter) {
+    .Call('BCD_sem_el_naive_fit_obj', PACKAGE = 'BCD', weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter)
+}
+
+sem_el_naive_fit_weights <- function(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter) {
+    .Call('BCD_sem_el_naive_fit_weights', PACKAGE = 'BCD', weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter)
 }
 

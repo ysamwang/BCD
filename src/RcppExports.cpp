@@ -26,21 +26,71 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-// sem_el_fitC
-double sem_el_fitC(SEXP y_r, SEXP omega_r, SEXP b_weights_r, SEXP d_r, SEXP dual_r, int v, double tol, int max_iter);
-RcppExport SEXP BCD_sem_el_fitC(SEXP y_rSEXP, SEXP omega_rSEXP, SEXP b_weights_rSEXP, SEXP d_rSEXP, SEXP dual_rSEXP, SEXP vSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
+// sem_el_fit_obj
+double sem_el_fit_obj(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r, SEXP dual_r, double tol, int max_iter);
+RcppExport SEXP BCD_sem_el_fit_obj(SEXP b_weights_rSEXP, SEXP y_rSEXP, SEXP omega_rSEXP, SEXP b_rSEXP, SEXP dual_rSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type b_weights_r(b_weights_rSEXP);
     Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
     Rcpp::traits::input_parameter< SEXP >::type omega_r(omega_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type b_weights_r(b_weights_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type d_r(d_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
     Rcpp::traits::input_parameter< SEXP >::type dual_r(dual_rSEXP);
-    Rcpp::traits::input_parameter< int >::type v(vSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
-    __result = Rcpp::wrap(sem_el_fitC(y_r, omega_r, b_weights_r, d_r, dual_r, v, tol, max_iter));
+    __result = Rcpp::wrap(sem_el_fit_obj(b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter));
+    return __result;
+END_RCPP
+}
+// sem_el_fit_weights
+Rcpp::List sem_el_fit_weights(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r, SEXP dual_r, double tol, int max_iter);
+RcppExport SEXP BCD_sem_el_fit_weights(SEXP b_weights_rSEXP, SEXP y_rSEXP, SEXP omega_rSEXP, SEXP b_rSEXP, SEXP dual_rSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type b_weights_r(b_weights_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type omega_r(omega_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type dual_r(dual_rSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
+    __result = Rcpp::wrap(sem_el_fit_weights(b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter));
+    return __result;
+END_RCPP
+}
+// sem_el_naive_fit_obj
+double sem_el_naive_fit_obj(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r, SEXP dual_r, double tol, int max_iter);
+RcppExport SEXP BCD_sem_el_naive_fit_obj(SEXP weights_rSEXP, SEXP y_rSEXP, SEXP omega_rSEXP, SEXP b_rSEXP, SEXP dual_rSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type weights_r(weights_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type omega_r(omega_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type dual_r(dual_rSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
+    __result = Rcpp::wrap(sem_el_naive_fit_obj(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter));
+    return __result;
+END_RCPP
+}
+// sem_el_naive_fit_weights
+Rcpp::List sem_el_naive_fit_weights(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r, SEXP dual_r, double tol, int max_iter);
+RcppExport SEXP BCD_sem_el_naive_fit_weights(SEXP weights_rSEXP, SEXP y_rSEXP, SEXP omega_rSEXP, SEXP b_rSEXP, SEXP dual_rSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type weights_r(weights_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type omega_r(omega_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type dual_r(dual_rSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
+    __result = Rcpp::wrap(sem_el_naive_fit_weights(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter));
     return __result;
 END_RCPP
 }

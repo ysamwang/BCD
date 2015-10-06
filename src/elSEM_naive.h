@@ -1,5 +1,5 @@
-#ifndef EL_SEM_H
-#define EL_SEM_H
+#ifndef EL_SEM_NAIVE_H
+#define EL_SEM_NAIVE_H
 
 
 #include <stdlib.h>
@@ -9,11 +9,11 @@
 using namespace Rcpp ;
 using namespace arma;
 
-class el_sem
+class el_sem_naive
 {
 public:
     // Initialize sem object:
-    el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r,SEXP b_r , SEXP dual_r);
+    el_sem_naive(SEXP weights_r, SEXP y_r, SEXP omega_r,SEXP b_r , SEXP dual_r);
     double update_dual(double tol, int max_iter);
     vec get_d();
 
@@ -21,11 +21,11 @@ public:
     int get_iter();
 
 protected:
-    mat b_weights_; // matrix of directed egdge weights
+    mat sigma_;
     vec d_; //vector of denominators of p_n (ie p_n = 1 / d_(n))
     vec dual_; // dual variables
 
-    uvec gamma_indices_;
+
     mat constraints_;
 
     int v_;
