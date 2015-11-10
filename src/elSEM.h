@@ -13,7 +13,7 @@ class el_sem
 {
 public:
     // Initialize sem object:
-    el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r,SEXP b_r , SEXP dual_r);
+    el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r,SEXP b_r , SEXP dual_r, int meanEst);
     double update_dual(double tol, int max_iter);
     vec get_d();
 

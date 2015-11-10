@@ -1,6 +1,6 @@
 #include "elSEM.h"
 
-el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r)
+el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r, int meanEst)
 {
     //matrix which holds the observed data
     mat y = as<arma::mat>(y_r);
@@ -11,16 +11,28 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r)
 
     //find appropriate spots to put in b_weights_r
     uvec b_spots = find(as<arma::mat>(b_r)); //non-structural zeros in B
+    vec means = vec(v_, fill::zeros); //non-zero means
     b_weights_ = mat(v_, v_, fill::zeros); // matrix with edge weights
+
+
+    if(meanEst){
+        means = as<arma::vec>(b_weights_r).head(v_);
+        b_weights_.elem(b_spots) = as<arma::vec>(b_weights_r).tail(as<arma::vec>(b_weights_r).n_elem - v_);
+    } else {
     b_weights_.elem(b_spots) = as<arma::vec>(b_weights_r);
+    }
 
 
     dual_ = as<arma::vec>(dual_r); //dual variables
 
     gamma_indices_ = arma::find(trimatu(as<arma::mat>(omega_r) == 0 )); //structural 0's in Omega
 
-    constraints_ = mat(v_ + gamma_indices_.n_elem, n_); //constraints containing mean and covariance restrictions
-    constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights_) * y ; //mean restrictions
+    constraints_ = mat(v_ + gamma_indices_.n_elem, n_);  //constraints containing mean and covariance restrictions
+    constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights_) * y; //mean restrictions
+
+    if(meanEst) {
+        constraints_.rows(0, v_ - 1).each_col() -= means;
+    }
 
 
     //covariance restrictions
@@ -35,8 +47,6 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r)
 
 double el_sem::update_dual(double tol, int max_iter)
 {
-    //how far to scale back if
-
 
     //pre-allocate memory for gradient, hessian and update
     vec grad(v_ + gamma_indices_.n_elem );
@@ -100,7 +110,7 @@ void el_sem::set_gradient_hessian(vec &grad, mat &hessian)
     int i;
     hessian.zeros();
     d_ = (constraints_.t() * dual_) + 1.0;
-    grad = - sum( constraints_ *diagmat( 1.0 / d_), 1);
+    grad = - sum( constraints_ * diagmat( 1.0 / d_), 1);
 
     for(i = 0; i < n_ ; i ++) {
         hessian += constraints_.col(i) * constraints_.col(i).t() / pow(d_(i),2);
