@@ -5,14 +5,16 @@
 \title{Fitting Cyclic Linear Structural Equation Models}
 \usage{
 ricf(B, Omega, Y, BInit = NULL, OmegaInit = NULL, sigConv = TRUE,
-  tol = 1e-05, maxIter = 5000)
+  tol = 1e-05, maxIter = 5000, msgs = TRUE, omegaInitScale = 0.9,
+  maxKap = 1e+13)
 }
 \arguments{
 \item{B}{V by V matrix with {0,1} giving structure of directed edges}
 
 \item{Omega}{V by V matrix with {0,1} giving structure of bi-directed edges}
 
-\item{BInit}{V by V matrix giving initial edges weights for directed edges}
+\item{BInit}{V by V matrix giving initial edges weights for directed edges. If BInit is NULL,
+a default initialization will be used.}
 
 \item{OmegaInit}{V by V matrix giving initial edge weights for bi-directed edges}
 
@@ -20,10 +22,15 @@ ricf(B, Omega, Y, BInit = NULL, OmegaInit = NULL, sigConv = TRUE,
 
 \item{maxIter}{integer specifying the maximum number of iterations}
 
+\item{msgs}{boolean on whether to print warning messages to command line if there are bows in the graph}
+
+\item{omegaInitScale}{value in (0,1) which determines how to initialize estimates for the bidirected edges.
+The directed edges are initialized through OLS regression and the bidirected edge weights are initialized
+by placing the structural 0's in the covariance of the residuals. If the resulting initialization is not positive
+definite, we scale the elements of corresponding row/columns such that sum(OmegaInit[i,-i]) =  OmegaInit[i,i] * omegaInitScale}
+
 \item{signConv}{boolean which specifies how to measure convergence. \code{TRUE} looks for
 convergence in Sigma while \code{FALSE} looks for convergence in the actual edge weight estimates}
-
-\item{maxKap}{positive scalar which determines largest conditioning number before throwing error}
 }
 \value{
 \item{sigmaHat}{estimated covariance matrix at convergence}
