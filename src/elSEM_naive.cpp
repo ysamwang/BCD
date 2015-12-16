@@ -1,6 +1,6 @@
 #include "elSEM_naive.h"
 
-el_sem_naive::el_sem_naive(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r)
+el_sem_naive::el_sem_naive(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r, int meanEst)
 {
     mat y = as<arma::mat>(y_r);
     n_ = y.n_cols;
@@ -13,13 +13,24 @@ el_sem_naive::el_sem_naive(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SE
     uvec omega_spots = arma::find(trimatl(as<arma::mat>(omega_r)));
     vec weights = as<arma::vec>(weights_r);
 
-    mat b_weights(v_, v_, fill::zeros);
-    b_weights.elem(b_spots) = weights.rows(0, b_spots.n_elem - 1);
-
-
     mat omega_weights(v_, v_, fill::zeros);
-    omega_weights.elem(omega_spots) = weights.rows(b_spots.n_elem, b_spots.n_elem + omega_spots.n_elem -1);
-    omega_weights = symmatl(omega_weights);
+    mat b_weights(v_, v_, fill::zeros);
+    vec means = vec(v_, fill::zeros); //non-zero means
+
+
+
+    if(meanEst){
+        means = as<arma::vec>(weights_r).head(v_);
+        b_weights.elem(b_spots) = as<arma::vec>(weights_r).subvec(v_, v_ + b_spots.n_elem - 1);
+        omega_weights.elem(omega_spots) = weights.subvec(v_ + b_spots.n_elem, v_ + b_spots.n_elem + omega_spots.n_elem - 1);
+        omega_weights = symmatl(omega_weights);
+    } else {
+        b_weights.elem(b_spots) = weights.subvec(0, b_spots.n_elem - 1);
+        omega_weights.elem(omega_spots) = weights.subvec(b_spots.n_elem, b_spots.n_elem + omega_spots.n_elem - 1);
+        omega_weights = symmatl(omega_weights);
+    }
+
+
     sigma_ = solve( (eye(v_, v_) - b_weights), solve( eye(v_, v_) - b_weights, omega_weights).t());
     dual_ = as<arma::vec>(dual_r);
 
@@ -27,6 +38,10 @@ el_sem_naive::el_sem_naive(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SE
     constraints_ = mat(v_ + (v_ *(v_ + 1) )/ 2, n_);
 
     constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights) * y;
+    if(meanEst) {
+        constraints_.rows(0, v_ - 1).each_col() -= means;
+    }
+
     int i,j,k;
     k = v_;
     for(i = 0; i < v_; i++) {

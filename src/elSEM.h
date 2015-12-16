@@ -21,7 +21,6 @@ public:
     int get_iter();
 
 protected:
-    mat b_weights_; // matrix of directed egdge weights
     vec d_; //vector of denominators of p_n (ie p_n = 1 / d_(n))
     vec dual_; // dual variables
 

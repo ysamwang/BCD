@@ -1,121 +1,104 @@
 #### Testing Empirical Likelihood for Structural Equation Models ####
-source("tests/simHelper.R")
-library(microbenchmark)
 
-set.seed(1111)
-V <- 10
-k <- 3
-b <- .2
-d <- .2
+set.seed(1000)
+V <- v<-  5
 
-sim.size <- 500
-n.list <- c(100)
-dist.list <- c("gauss") #, "t", "poisson", "lognormal")
+B <- matrix(c(0, 0, 1, 0, 0,
+              1, 0, 0, 0, 0,
+              0, 1, 0, 0, 1,
+              0, 0, 0, 0, 1,
+              0, 0, 0, 0, 0) , nrow = V, ncol = V, byrow = T)
+Omega <- diag(rep(1,V))
+Omega[3,4] <- Omega[4,3] <- 1
+Omega[2,5] <- Omega[5,2] <- 1
+Omega.true <- diag(rep(1,V))
+Omega.true[3,4] <- Omega.true[4,3] <- .6
+Omega.true[2,5] <- Omega.true[5,2] <- -.2
+
+B.true <- runif(V^2, -1, 1) * B
+b.vec <- B.true[B == 1]
+o.vec <- Omega.true[lower.tri(Omega, diag = T) & Omega == 1]
+
+temp <- solve(diag(rep(1,V)) - B.true)
+sigma <- temp %*% Omega.true %*% t(temp)
+sigma
+
+sim.size <- 1000
+n.list <- c(500,1000, 5000)
+dist.list <- c("gauss", "t", "lognormal")
 
 
 
-record <- data.frame(times = rep(0, sim.size),
-                     # times_naive = rep(0, sim.size),
-                     times_euclid = rep(0, sim.size),
-                     times_ricf = rep(0, sim.size),
-                     error_b = rep(0, sim.size),
-                     # error_b_naive = rep(0, sim.size),
-                     error_b_euclid =rep(0, sim.size),
-                     error_b_ricf =rep(0, sim.size),
-                     error_omega = rep(0, sim.size),
-                     # error_omega_naive = rep(0, sim.size),
-                     error_omega_euclid=rep(0, sim.size),
-                     error_omega_ricf=rep(0, sim.size))
+error.b <- matrix(0, ncol = sum(B) * 4, nrow = length(n.list))
+error.o <- matrix(0, ncol =(V + (sum(Omega == 1) - V)/2) * 4, nrow = length(n.list))
+reconstruct <- matrix(0, nrow = length(n.list), ncol = 5)
+
 for(dist in dist.list){
-  for(n in n.list){
-    cat(paste("\n",dist," : ", n, sep = ""))
+  for(n.index in 1:length(n.list)){
+    n <- n.list[n.index]
+    cat(paste("\n",dist,n,":\n", sep = " "))
     for(sim in 1:sim.size)
     {
       cat(paste(sim, "."))
-      mod <- generateModel(v = V, n = n, k = k, b = b, d = d, errorDist = dist)
       
-      mb_ricf <- microbenchmark(out_ricf <- ricf(B = mod$B, Omega = mod$Omega, Y = mod$Y, BInit = NULL,
-                                   OmegaInit = NULL, sigConv = 0, maxIter = 500,
-                                   msgs = FALSE, omegaInitScale = .7)
-                                , times = 1, control = list(warmpup = 0))
-      
-      out_ricf_init <- ricf(B = mod$B, Omega = mod$Omega, Y = mod$Y, BInit = NULL,
-                       OmegaInit = NULL, sigConv = 0, maxIter = 1,
-                       msgs = FALSE, omegaInitScale = .7)
-      
-      
-      num_dual_vars = V + sum(mod$Omega == 0)/2
-      init_val = c(out_ricf_init$BHat[mod$B==1])
-      
-      mb <- microbenchmark(optim_out <- optim(par = init_val, fn = sem_el_fit_obj, gr = NULL,
-            y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
-            dual_r = rep(0, num_dual_vars), tol = 1e-6, max_iter = 60, meanEst = 0,
-            method = "BFGS", control = list(fnscale = -1))
-            , times = 1, control = list(warmpup = 0))
-      
-      
-      fitted_mod <- sem_el_fit_weights(optim_out$par,y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
-                                       dual_r = rep(0, num_dual_vars), meanEst=0, tol = 1e-6, max_iter = 100)
-      B <- matrix(0, nrow = V, ncol = V)
-      B[mod$B==1] <- optim_out$par
-      omega <- (diag(rep(1, V)) - B) %*% mod$Y %*% diag(c(1/fitted_mod$d)) %*% t(mod$Y) %*% t((diag(rep(1, V)) - B))
-      
-      
-      mb_euclid <- microbenchmark(optim_out_euclid <- optim(par = init_val, fn = sem_el_euclid_fit_obj, gr = NULL,
-                                              y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
-                                              method = "BFGS", control = list(fnscale = -1))
-                           , times = 1, control = list(warmpup = 0))
-      
-      fitted_mod_euclid <- sem_el_euclid_fit_weights(optim_out_euclid$par,y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B)
-      B <- matrix(0, nrow = V, ncol = V)
-      B[mod$B==1] <- optim_out_euclid$par
-      omega_euclid <- (diag(rep(1, V)) - B) %*% mod$Y %*% diag(c(fitted_mod_euclid$p_star)) %*% t(mod$Y) %*% t((diag(rep(1, V)) - B))
-      
-      omeg_weights <- c()
-      omeg_truth <- c()
-      omeg_euclid <- c()
-      omeg <- c()
-      for(i in 1:V){
-        for(j in i:V){
-          if(mod$Omega[i,j] == 1)
-          {
-            omeg_weights <- c(omeg_weights, out_ricf$OmegaHat[i,j])
-            omeg_truth <- c(omeg_truth, mod$Omega.true[i,j])
-            omeg_euclid <- c(omeg_euclid, omega_euclid[i,j])
-            omeg <- c(omeg, omega[i,j])
-          }
-        }
+      #### Generate Data ####
+      if(dist == "t"){
+        t.df <- 5
+        Y <- temp %*% t(mvtnorm::rmvt(n, sigma = Omega.true * (t.df-2)/t.df, df = t.df))
+      } else if(dist == "lognormal"){
+        sig.ln <- log(1 + (exp(1) - 1) * Omega.true)
+        z <- t(MASS::mvrnorm(n = n, mu = rep(0, V), Sigma = sig.ln))
+        Y <- temp %*% (exp(z) - exp(1/2))/ sqrt(exp(1) * (exp(1) - 1))
+        
+        } else if(dist == "gauss") {
+        Y <- temp %*% t(MASS::mvrnorm(n = n, mu = rep(0, V), Sigma = Omega.true))
       }
       
+      out_ricf <- ricf(B = B, Omega = Omega, Y = (Y - rowMeans(Y)), BInit = NULL,
+                                   OmegaInit = NULL, sigConv = 0, maxIter = 1000,
+                                   msgs = FALSE, omegaInitScale = .9)
       
-#     init_val_naive = c(out_ricf$BHat[mod$B==1], omeg_weights)
-#       
-#       num_dual_vars_naive = V + V * (V + 1) / 2
-#       mb_naive <- microbenchmark(optim_out_naive <- optim(par = init_val_naive, fn = sem_el_naive_fit_obj, gr = NULL,
-#                    y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
-#                    dual_r = rep(0, num_dual_vars_naive), tol = 1e-6, max_iter = 100,
-#                    method = "BFGS", control = list(fnscale = -1)),
-#                    times = 1, control = list(warmpup = 1))
-#       
-#       fitted_mod_naive <- sem_el_naive_fit_weights(optim_out_naive$par,y_r = mod$Y, omega_r = mod$Omega, b_r = mod$B,
-#                                        dual_r = rep(0, num_dual_vars_naive), tol = 1e-6, max_iter = 100)
-      record$times[sim] <- mb$time * (optim_out$convergence == 0) * (sum(1/fitted_mod$d) == 1)
-      # record$times_naive[sim] <- mb_naive$time  * (optim_out_naive$convergence == 0) * (sum(1/fitted_mod_naive$d) == 1)
-      record$times_euclid[sim] <- mb_euclid$time * (optim_out_euclid$convergence == 0) * (sum(fitted_mod_euclid$p_star) == 1)
-      record$times_ricf[sim] <- mb_ricf$time * out_ricf$Converged
+      out_ricf_no_mean <- ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
+                       OmegaInit = NULL, sigConv = 0, maxIter = 1000,
+                       msgs = FALSE, omegaInitScale = .9)
+
       
-      record$error_b_ricf[sim] <- mean((c(out_ricf$BHat[which(c(mod$B)==1)]) - c(mod$B.true[which(c(mod$B)==1)]))^2)
-      record$error_b[sim] <- mean((optim_out$par - c(mod$B.true[which(c(mod$B)==1)]))^2)
-      # record$error_b_naive[sim] <- mean((optim_out_naive$par[1:sum(mod$B)] - c(mod$B.true[which(c(mod$B)==1)]))^2)
-      record$error_b_euclid[sim] <-mean((optim_out_euclid$par - c(mod$B.true[which(c(mod$B)==1)]))^2)
+      el_fit_null <- fitEL(Y = Y, B = B, Omega = Omega, ties = F, meanEst = 1)
+      el_fit_null_no_mean <- fitEL(Y = Y, B = B, Omega = Omega, ties = F, meanEst = 0)
       
-      record$error_omega_ricf[sim] <- mean((omeg_weights - omeg_truth)^2)
-      record$error_omega[sim] <- mean((omeg - omeg_truth)^2)
-      # record$error_omega_naive[sim] <- mean((optim_out_naive$par[(sum(mod$B)+1):(sum(mod$B)+length(omeg_weights))] - omeg_truth)^2)
-      record$error_omega_euclid[sim] <- mean((omeg_euclid - omeg_truth)^2)  
+      
+      b.vec.ricf <- out_ricf$BHat[B == 1]
+      b.vec.ricf_no_mean <- out_ricf_no_mean$BHat[B == 1]
+      b.vec.el <- el_fit_null$B.hat[B == 1]
+      b.vec.el_no_mean <- el_fit_null_no_mean$B.hat[B == 1]
+
+
+      o.vec.ricf <- out_ricf$OmegaHat[lower.tri(Omega, diag = T) & Omega == 1]
+      o.vec.ricf_no_mean <- out_ricf_no_mean$OmegaHat[lower.tri(Omega, diag = T) & Omega == 1]
+      
+      o.vec.el <- el_fit_null$Omega.hat[lower.tri(Omega, diag = T) & Omega == 1]
+      o.vec.el_no_mean <- el_fit_null_no_mean$Omega.hat[lower.tri(Omega, diag = T) & Omega == 1]
+      
+      error.b[n.index, ] <- error.b[n.index, ] + c((b.vec.ricf - b.vec)^2,
+                                                   (b.vec.ricf_no_mean - b.vec)^2,
+                                                   (b.vec.el - b.vec)^2,
+                                                   (b.vec.el_no_mean - b.vec)^2)
+      
+      error.o[n.index, ] <- error.o[n.index, ] + c((o.vec.ricf - o.vec)^2,
+                                                   (o.vec.ricf_no_mean - o.vec)^2,
+                                                   (o.vec.el - o.vec)^2,
+                                                   (o.vec.el_no_mean - o.vec)^2)
+      reconstruct[n.index, ] <- reconstruct[n.index, ] + c(mean((out_ricf$SigmaHat - sigma)^2),
+                                                           mean((out_ricf_no_mean$SigmaHat - sigma)^2),
+                                                           mean((Y %*% diag(el_fit_null$p) %*% t(Y) - sigma)^2),
+                                                           mean((Y %*% diag(el_fit_null_no_mean$p) %*% t(Y) - sigma)^2),
+                                                           mean((Y %*% t(Y)/n - sigma)^2))
+                                                           
     }
-    # saveRDS(record, paste("record_",dist,"_",n,".RDS", sep = ""))
   }
+#   saveRDS(error.b / sim.size, paste("record_b_",dist,".RDS", sep = ""))
+#   saveRDS(error.o / sim.size, paste("record_o_",dist,".RDS", sep = ""))
+#   saveRDS(reconstruct / sim.size, paste("record_sigma_",dist,".RDS", sep = ""))
 }
 
 

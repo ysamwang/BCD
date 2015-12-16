@@ -1,5 +1,20 @@
-#### Generate Model ####
-generateModel <-function(v, n, k, d, b, errorDist = ""){
+#' Generate Data from Structural Equation Model
+#' 
+#' 
+#' Samples a random Graph and Data
+#' 
+#'  
+#' @param v number of nodes
+#' @param n number of samples
+#' @param k the size of the largest cycle
+#' @param d the   
+#' @return \item{sigmaHat}{estimated covariance matrix at convergence}
+#'    \item{bHat}{estimated B matrix (edge weights for directed edges) at converegence}
+#'    \item{omegaHat}{estimated Omega (edge weights for bi-directed edges) at convergence}
+#'    \item{iterations}{number of iterations until convergence. a single iteration is considered
+#'    a pass through all nodes}
+#'    \item{converged}{boolean on whether or not the algorithm converged before the max iterations}
+generateModel <-function(v, n, k, d, b, errorDist = "gauss"){
   # Setup B and Omega matrices
   
   
@@ -49,6 +64,9 @@ generateModel <-function(v, n, k, d, b, errorDist = ""){
     Omega.true[i,i] <- sum(abs(Omega.true[i, -i])) + 1 + rchisq(1, df = 1)
   }
   
+  temp <- solve(diag(rep(1,V)) - B.true)
+  sigma <- temp %*% Omega.true %*% t(temp)
+  
   # Sample data from multivariate normal and make mean 0
   if(errorDist == "gamma")
   {
@@ -71,11 +89,8 @@ generateModel <-function(v, n, k, d, b, errorDist = ""){
     errors <- (errors - exp(ln.mu + ln.var/2)) / sqrt((exp(ln.var) - 1) * exp(2*ln.mu + ln.var))
     Y <- solve(diag(rep(1, v)) - B.true, t(chol(Omega.true)) %*% errors)
   } else if(errorDist == "gauss") {
-    temp <- solve(diag(rep(1,V)) - B.true)
-    sigma <- temp %*% Omega.true %*% t(temp)
-    Y <- t(mvrnorm(n = n, mu = rep(0, v), Sigma = sigma))
+    Y <- t(MASS::mvrnorm(n = n, mu = rep(0, v), Sigma = sigma))
   }
-  Y <- Y - rowMeans(Y)
   
   return(list(Y= Y, B = B, Omega = Omega, B.true = B.true,
               Omega.true = Omega.true, Sigma = sigma))

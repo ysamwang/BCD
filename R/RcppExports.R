@@ -13,12 +13,12 @@ sem_el_fit_weights <- function(b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_
     .Call('BCD_sem_el_fit_weights', PACKAGE = 'BCD', b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst)
 }
 
-sem_el_naive_fit_obj <- function(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter) {
-    .Call('BCD_sem_el_naive_fit_obj', PACKAGE = 'BCD', weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter)
+sem_el_naive_fit_obj <- function(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst) {
+    .Call('BCD_sem_el_naive_fit_obj', PACKAGE = 'BCD', weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst)
 }
 
-sem_el_naive_fit_weights <- function(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter) {
-    .Call('BCD_sem_el_naive_fit_weights', PACKAGE = 'BCD', weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter)
+sem_el_naive_fit_weights <- function(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst) {
+    .Call('BCD_sem_el_naive_fit_weights', PACKAGE = 'BCD', weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst)
 }
 
 sem_el_euclid_fit_obj <- function(b_weights_r, y_r, omega_r, b_r) {

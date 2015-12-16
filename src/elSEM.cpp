@@ -12,14 +12,14 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r,
     //find appropriate spots to put in b_weights_r
     uvec b_spots = find(as<arma::mat>(b_r)); //non-structural zeros in B
     vec means = vec(v_, fill::zeros); //non-zero means
-    b_weights_ = mat(v_, v_, fill::zeros); // matrix with edge weights
-
+    mat b_weights = mat(v_, v_, fill::zeros); // matrix with edge weights
 
     if(meanEst){
         means = as<arma::vec>(b_weights_r).head(v_);
-        b_weights_.elem(b_spots) = as<arma::vec>(b_weights_r).tail(as<arma::vec>(b_weights_r).n_elem - v_);
+        b_weights.elem(b_spots) = as<arma::vec>(b_weights_r).tail(as<arma::vec>(b_weights_r).n_elem - v_);
+
     } else {
-    b_weights_.elem(b_spots) = as<arma::vec>(b_weights_r);
+        b_weights.elem(b_spots) = as<arma::vec>(b_weights_r);
     }
 
 
@@ -28,7 +28,7 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r,
     gamma_indices_ = arma::find(trimatu(as<arma::mat>(omega_r) == 0 )); //structural 0's in Omega
 
     constraints_ = mat(v_ + gamma_indices_.n_elem, n_);  //constraints containing mean and covariance restrictions
-    constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights_) * y; //mean restrictions
+    constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights) * y; //mean restrictions
 
     if(meanEst) {
         constraints_.rows(0, v_ - 1).each_col() -= means;

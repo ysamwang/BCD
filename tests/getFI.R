@@ -1,6 +1,6 @@
 library('BCD')
 library('MASS')
-# setwd("~/BCD")
+
 set.seed(123)
 V <- 8
 n <- 1000
@@ -29,12 +29,12 @@ for(type in c("gauss", "lognormal")){
                        o.mse.el = rep(0, length(n.list)),
                        o.bias.el = rep(0, length(n.list)))
   
-  ci.record <- matrix(0, nrow = length(n.list), ncol = (sum(mod$B) + (sum(mod$Omega) - V)/2 + V) * 2)
-  se.record <- matrix(0, nrow = length(n.list), ncol = (sum(mod$B) + (sum(mod$Omega) - V)/2 + V) * 2)
+  ci.record <- matrix(0, nrow = length(n.list), ncol = (sum(mod$B) + (sum(mod$Omega) - V)/2 + V) * 3)
+  se.record <- matrix(0, nrow = length(n.list), ncol = (sum(mod$B) + (sum(mod$Omega) - V)/2 + V) * 3)
   entropy.record <- rep(0, length(n.list))
   for(n.index in 1:length(n.list)){
     b.mse.like <- b.mse.el <- o.mse.like <- o.mse.el <- b.bias.like <- b.bias.el <- o.bias.like <- o.bias.el <- rep(0, sim.size)
-    ci.like <- ci.el <- se.length.like <- se.length.el <- rep(0, sum(mod$B) + (sum(mod$Omega) - V)/2 + V)
+    ci.like <- ci.el <- ci.like_obs <- se.length.like <- se.length.el <- se.length.like_obs <- rep(0, sum(mod$B) + (sum(mod$Omega) - V)/2 + V)
     entropy <- 0
     n <- n.list[n.index]
     cat(paste("\n===",n, type,"\n"))
@@ -64,8 +64,7 @@ for(type in c("gauss", "lognormal")){
       
       
       
-      I <- ricf_info(S = out_ricf$SigmaHat, BHat = out_ricf$BHat, OmegaHat = out_ricf$OmegaHat,
-                     B = mod$B, Omega = mod$Omega)
+      I <- getRicfInfo(S = out_ricf$SigmaHat, B = mod$B, Omega = mod$Omega ,B.hat = out_ricf$BHat, Omega.hat = out_ricf$OmegaHat,type = "expected")
       
       beta.like <- out_ricf$BHat[which(mod$B==1)]
       omega.like <- out_ricf$OmegaHat[lower.tri(mod$Omega.true, diag = T) & mod$Omega ==1]
@@ -79,7 +78,8 @@ for(type in c("gauss", "lognormal")){
       se.like <- sqrt(diag(solve(I))/n)
       se.length.like <- se.length.like + se.like 
       ci.like <- ci.like +  ((abs(c(beta.like - b.true, omega.like - omega.true))  / se.like) < 1.959964)
-    
+  
+      ci.like <- ci.like +  ((abs(c(beta.like - b.true, omega.like - omega.true))  / se.like) < 1.959964)  
       ##### EL Procedure #####
       
       out_ricf_init <- ricf(B = mod$B, Omega = mod$Omega, Y = Y, BInit = NULL,
@@ -138,17 +138,3 @@ for(type in c("gauss", "lognormal")){
   saveRDS(se.record, paste("se_record_", type, ".RDS", sep = ""))
   saveRDS(entropy.record, paste("entropy_record_", type,".RDS", sep = ""))
 }
-
-# type = "lognormal"
-# record <- readRDS(paste("record_", type, ".RDS", sep = ""))
-# ci.record <- readRDS(paste("ci_record_", type, ".RDS", sep = ""))
-# se.record <- readRDS(paste("se_record_", type, ".RDS", sep = ""))
-# entropy.record <- readRDS(paste("entropy_record_", ".RDS", type, sep = ""))
-# 
-# 
-# plot(ci.record[,24],
-#      xlim = c(1,5), type= "b", ylim = c(.3,1))
-# for(i in 25:46){
-#   lines(ci.record[,i],type = "b")
-# }
-# abline(h = .95, lwd = 2, col = "red")

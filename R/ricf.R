@@ -40,7 +40,7 @@ ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
     # only print if msgs = TRUE
     warning("The graph either contains a bow or a self-loop.",call. = FALSE, immediate. = TRUE)
   }	
-  if (maxIter <= 0 || ceiling(maxIter) != maxIter)
+  if (maxIter < 0 || ceiling(maxIter) != maxIter)
     stop("A positive integer is needed for the max number of iterations!")
   if (tol <= 0)
     stop("A positive tolerance is needed for convergence to be possible!")

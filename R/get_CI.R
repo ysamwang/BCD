@@ -10,77 +10,101 @@
 #' @param B.hat V by V matrix giving estimated edges weights for directed edges
 #' @param Omega.hat V by V matrix giving estimated edge weights for bi-directed edges
 #' @param p vector of length N containing the estimated empirical likelihood weights
-#' @return The asymptotic covariance matrix as derived in Qin and Lawless 1994
+#' @param type the type of variances to return. options are "asymptotic" for the asymptotic
+#' variance as defined in Qin and Lawless 1994 or "profile" for profile confiendence intervals
+#' @return The (scaled by n) estimated covariance matrix or profile confidence intervals
 #' @export
-getELVariance <- function(Y, B, Omega, B.hat, Omega.hat, p)
+var.el <- function(Y, B, Omega, B.hat, Omega.hat = NULL, p = NULL, cutoff = NULL, grid = 1e-3, type = "asymptotic")
 {
-  # Index of non-zero B's in proper order (column by column)
-  beta.index <- getBetaIndex(B)
-  # Index of non-zero Omega's
-  omega.index <- getOmegaIndex(Omega)
-  # number of Nodes
-  V <- dim(B)[1]
-  # errors for each node and observation
-  errors <- ((diag(rep(1,V)) - B.hat) %*% Y)  #- mu.hat
-  
-  
-  # pre-allocate memory (note that dg.i is cleared out in each iteration of the loop)
-  dg <- matrix(0, nrow = V + V * (V + 1) /2,
-               ncol =  dim(beta.index)[1] + dim(omega.index)[1])
-  g.var <- matrix(0, nrow = V + V * (V + 1) /2,
-                  ncol = V + V * (V + 1) /2)
-  g.i <- rep(0, V + V * (V+1)/2)
-  
-  
-  
-  # indexes of non-replicated entries of Omega
-  # This includes 0 entries as well whereas Omega.index only includes non-zero entries
-  covar.temp <- matrix(0, ncol = 2, nrow = V * (V + 1) /2)
-  count <- 1
-  for(i in 1:V){
-    # TO-DO: modify code so it is similar to Omega.index in cbinding to null
-    # probably more readable (could be tad slower)
-    covar.temp[c(count:(count + V -i)), c(1:2)] <- cbind(c(i:V), rep(i, (V-i+1)))
-    count <- count + (V-i+1)
-  }
-  
-  
-  for(n in 1:length(p)){
-    ### Form m(X_i, \theta ) ### 
-    
-    # mean restrictions
-    g.i[1:V] <- errors[, n]
-    # covariance restrictions
-    g.i[-c(1:V)] <- errors[covar.temp[, 1], n] * errors[covar.temp[, 2] ,n] - Omega.hat[covar.temp]
-    
-    g.var <- g.var + p[n] * g.i %*% t(g.i)
+  if(type == "asymptotic"){
+    # Index of non-zero B's in proper order (column by column)
+    beta.index <- .getBetaIndex(B)
+    # Index of non-zero Omega's
+    omega.index <- .getOmegaIndex(Omega)
+    # number of Nodes
+    V <- dim(B)[1]
+    # errors for each node and observation
+    errors <- ((diag(rep(1,V)) - B.hat) %*% Y)  #- mu.hat
     
     
-    ### Now form dm/dtheta
-    dg.i <- matrix(0, nrow = V + V * (V + 1)/2,
-                   ncol = dim(beta.index)[1] + dim(omega.index)[1])
+    # pre-allocate memory (note that dg.i is cleared out in each iteration of the loop)
+    dg <- matrix(0, nrow = V + V * (V + 1) /2,
+                 ncol =  dim(beta.index)[1] + dim(omega.index)[1])
+    g.var <- matrix(0, nrow = V + V * (V + 1) /2,
+                    ncol = V + V * (V + 1) /2)
+    g.i <- rep(0, V + V * (V+1)/2)
     
-    # derivative of mean constraints
-    for(k in 1:V){
-      dg.i[k, which(beta.index[, 1] == k)] <- -Y[beta.index[which(beta.index[, 1] == k), 2], n]
+    
+    
+    # indexes of non-replicated entries of Omega
+    # This includes 0 entries as well whereas Omega.index only includes non-zero entries
+    covar.temp <- matrix(0, ncol = 2, nrow = V * (V + 1) /2)
+    count <- 1
+    for(i in 1:V){
+      # TO-DO: modify code so it is similar to Omega.index in cbinding to null
+      # probably more readable (could be tad slower)
+      covar.temp[c(count:(count + V -i)), c(1:2)] <- cbind(c(i:V), rep(i, (V-i+1)))
+      count <- count + (V-i+1)
     }
     
-    for(j in 1:(V * (V+1) / 2)){
-      dg.i[V + j, which(beta.index[,1] == covar.temp[j,1])] <- -Y[beta.index[which(beta.index[,1] == covar.temp[j, 1]), 2], n] * errors[covar.temp[j,2], n]
-      dg.i[V + j, which(beta.index[,1] == covar.temp[j,2])] <- -Y[beta.index[which(beta.index[,1] == covar.temp[j, 2]), 2], n] * errors[covar.temp[j,1], n]
-      if(Omega[covar.temp[j,1],covar.temp[j,2]] == 1){
-        dg.i[V + j, dim(beta.index)[1] + which(covar.temp[j,1] == omega.index[,1] & covar.temp[j,2] == omega.index[,2])] <- -1 
+    
+    for(n in 1:length(p)){
+      ### Form m(X_i, \theta ) ### 
+      
+      # mean restrictions
+      g.i[1:V] <- errors[, n]
+      # covariance restrictions
+      g.i[-c(1:V)] <- errors[covar.temp[, 1], n] * errors[covar.temp[, 2] ,n] - Omega.hat[covar.temp]
+      
+      g.var <- g.var + p[n] * g.i %*% t(g.i)
+      
+      
+      ### Now form dm/dtheta
+      dg.i <- matrix(0, nrow = V + V * (V + 1)/2,
+                     ncol = dim(beta.index)[1] + dim(omega.index)[1])
+      
+      # derivative of mean constraints
+      for(k in 1:V){
+        dg.i[k, which(beta.index[, 1] == k)] <- -Y[beta.index[which(beta.index[, 1] == k), 2], n]
       }
+      
+      # derivative of covariance constraints
+      for(j in 1:(V * (V+1) / 2)){
+        dg.i[V + j, which(beta.index[,1] == covar.temp[j,1])] <- -Y[beta.index[which(beta.index[,1] == covar.temp[j, 1]), 2], n] * errors[covar.temp[j,2], n]
+        dg.i[V + j, which(beta.index[,1] == covar.temp[j,2])] <- -Y[beta.index[which(beta.index[,1] == covar.temp[j, 2]), 2], n] * errors[covar.temp[j,1], n]
+        if(Omega[covar.temp[j,1],covar.temp[j,2]] == 1){
+          dg.i[V + j, dim(beta.index)[1] + which(covar.temp[j,1] == omega.index[,1] & covar.temp[j,2] == omega.index[,2])] <- -1 
+        }
+      }
+      dg <- dg + dg.i * p[n]
     }
-    dg <- dg + dg.i * p[n]
+    
+    return(solve(t(dg) %*% solve(g.var) %*% dg) /n)
+    
+  } else if(type == "profile"){
+    
+    columns <- matrix(c(1:V), nrow = V, ncol = V, byrow = T)
+    rows <- matrix(c(1:V), nrow = V, ncol = V)
+    beta.indices <- cbind(rows[which(B==1)], columns[which(B==1)])
+    
+    ret <- matrix(0, nrow = dim(beta.indices)[1], ncol = 5)
+    ret[, 2] <- B.hat[which(B == 1)]
+    
+    for(i in 1:dim(beta.indices)[1]){
+      ret[i, -2] <- .profile.like(Y, B, Omega, B.hat, cutoff, index = i, grid = grid)
+    }
+    
+    colnames(ret) <- c("Lower", "Estimate", "Upper", "Lower-LRT", "Upper-LRT")
+    return(ret)
+  } else {
+    stop("Invalid type given. Options are: asymptotic, profile")
   }
   
-  return(solve(t(dg) %*% solve(g.var) %*% dg))
 }
 
 
-## Helper function for emp
-getBetaIndex <- function(B)
+## Helper function for empirical likelihood variance
+.getBetaIndex <- function(B)
 {
   ret <- NULL
   for(i in 1:dim(B)[1]){
@@ -89,7 +113,8 @@ getBetaIndex <- function(B)
   return(ret)
 }
 
-getOmegaIndex <- function(Omega){ 
+## Helper function for empirical likelihood variance
+.getOmegaIndex <- function(Omega){ 
   ret <- NULL
   V <- dim(Omega)[1]
   for(i in 1:V){
@@ -97,6 +122,54 @@ getOmegaIndex <- function(Omega){
   } 
   return(ret)
 }
+
+
+.profile.like <- function(Y, B, Omega, B.hat, cutoff, index, grid = 1e-3) {
+  tol = 1e-6
+  maxInnerIter = 100
+  mu.hat = NULL
+  num_dual_vars = V + sum(Omega == 0)/2
+  val <- B.hat[which(B==1)]
+  point.est <- val[index]
+  
+  fitted_mod <- sem_el_fit_weights(val, y_r = Y, omega_r = Omega, b_r = B,
+                                   dual_r = rep(0, num_dual_vars), tol = tol, max_iter = maxInnerIter, meanEst = !is.null(mu.hat))
+  
+  
+  # get upper bound
+  while(-2 * sum(log(1/fitted_mod$d * n) ) < cutoff){
+    val[index] <- val[index] + grid
+    fitted_mod <- sem_el_fit_weights(val, y_r = Y, omega_r = Omega, b_r = B,
+                                     dual_r = rep(0, num_dual_vars), tol = tol, max_iter = maxInnerIter, meanEst = !is.null(mu.hat))  
+  }
+  upper <- val[index]- grid
+  upper.chisq <- -2 * sum(log(1/fitted_mod$d * n) )
+  
+  # get lower bound
+  val[index] <- point.est
+  fitted_mod <- sem_el_fit_weights(val, y_r = Y, omega_r = Omega, b_r = B,
+                                   dual_r = rep(0, num_dual_vars), tol = tol, max_iter = maxInnerIter, meanEst = !is.null(mu.hat))
+  
+  while(-2 * sum(log(1/fitted_mod$d * n))  < cutoff){
+    val[index] <- val[index] - grid
+    fitted_mod <- sem_el_fit_weights(val, y_r = Y, omega_r = Omega, b_r = B,
+                                     dual_r = rep(0, num_dual_vars), tol = tol, max_iter = maxInnerIter, meanEst = !is.null(mu.hat))  
+  }
+  lower <- val[index] + grid
+  lower.chisq <- -2 * sum(log(1/fitted_mod$d * n) )
+  
+  return(c(lower, upper, upper.chisq, lower.chisq))
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -112,59 +185,137 @@ getOmegaIndex <- function(Omega){
 #' @param B.hat V by V matrix giving estimated edges weights for directed edges
 #' @param Omega.hat V by V matrix giving estimated edge weights for bi-directed edges
 #' @param type string describing which Fisher Information to calculate. Options are "expected" or "observed".
-#' @return The Fisher information matrix as derived by Fox and Drton 2014
+#' @return The inverse (scaled by n) Fisher information matrix as derived by Fox and Drton 2014 or the Huber-White misspecified model covariance estimate
 #' @export
-getRicfInfo <- function(S, B, Omega,  B.hat, Omega.hat, type = "expected")
+var.ricf <- function(Y, B, Omega,  B.hat, Omega.hat, type = "expected")
 {
-  V <- dim(B)[1]
-  ### Create P Matrix ####
-  P <- matrix(0, nrow = V^2, ncol = sum(B))
-  temp <- matrix(c(which(c(B)==1),1:sum(B)), nrow = sum(B), ncol = 2)
-  P[temp] <- 1
-  Q <- matrix(0, nrow = V^2, ncol = (sum(Omega)-V)/2 + V)
   
-  ## TO-DO: Possibly use subsetting with direct insertion
-  Omega.temp <- matrix(0, nrow = V, ncol = V)
-  count <- 0
-  for(i in 1:V){
-    for(j in i:V){
-      if(Omega[i,j] == 1){
-        count <- count + 1
-        Omega.temp[i,j] <- count
-      }
-    }
-  }
-  Omega.temp <- Omega.temp + t(Omega.temp) - diag(diag(Omega.temp))
-  Q[cbind(c(1:V^2), c(Omega.temp))] <- 1
-  
-  
-  omega.inv <- solve(OmegaHat)
-  eye.minus.b.inv <- solve(diag(rep(1, V)) - BHat)
-  Tr <- matrix(0, nrow = V^2, ncol = V ^2)
-  Tr[matrix(c(1:V^2, (rep(c(1:V), V)-1) *V + rep(c(1:V), each = V)), ncol = 2)] <- 1
-  
-  I <- matrix(0, nrow = sum(B) + (sum(Omega)-V)/2 + V,
-              ncol = sum(B) + (sum(Omega)-V)/2 + V)
-  
-  if(type == "expected"){
-    I[1:sum(B), 1:sum(B)] <- t(P) %*% (S %x% omega.inv + (eye.minus.b.inv %x% t(eye.minus.b.inv)) %*% Tr) %*% P
-    I[-c(1:sum(B)),-c(1:sum(B))] <- 1/2 * t(Q) %*% (omega.inv %x% omega.inv) %*% Q
-    I[c(1:sum(B)),-c(1:sum(B))] <- t(P) %*% ( eye.minus.b.inv %x% omega.inv) %*% Q
-    I[-c(1:sum(B)),c(1:sum(B))] <- t(Q) %*% (t(eye.minus.b.inv) %x% omega.inv) %*% P
-  } else if (type == "observed"){
-    back_term <- omega.inv %*% (diag(rep(1, V)) - BHat) %*% S %*% t((diag(rep(1, V)) - BHat)) %*% omega.inv
-    I[1:sum(B), 1:sum(B)] <- t(P) %*% (S %x% omega.inv + (eye.minus.b.inv %x% t(eye.minus.b.inv)) %*% Tr) %*% P
-    # notice difference between this and expected
-    I[-c(1:sum(B)),-c(1:sum(B))] <- 1/2 * t(Q) %*% 
-      ((omega.inv %x% omega.inv) -
-         (omega.inv %x% back_term) - 
-         (back_term %x% omega.inv)) %*% Q
+  # Model based SE's with either expected or observed information
+  if(type == "expected" | type == "observed"){
+    V <- dim(B)[1]
+    I <- matrix(0, nrow = sum(B) + (sum(Omega)-V)/2 + V,
+                ncol = sum(B) + (sum(Omega)-V)/2 + V)
+    n <- dim(Y)[2]
+    S <- Y %*% t(Y) / n
     
-    I[c(1:sum(B)),-c(1:sum(B))] <- t(P) %*% ((S %*% t(diag(rep(1, V)) - BHat) %*% eye.minus.b.inv) %x% omega.inv) %*% Q
-    I[-c(1:sum(B)),c(1:sum(B))] <- t(I[c(1:sum(B)),-c(1:sum(B))])
-  } else {
-    stop("Argument type not valid")
-  }
   
-  return(I)
+    #### Setup permutation matrix P for B
+    P <- matrix(0, nrow = V^2, ncol = sum(B))
+    temp <- matrix(c(which(c(B)==1),1:sum(B)), nrow = sum(B), ncol = 2)
+    P[temp] <- 1
+    
+    
+    ### Setup permutation matrix Q for Omega
+    Omega.temp <- matrix(0, nrow = V, ncol = V)
+    Omega.temp[lower.tri(Omega.temp, diag = T) & Omega == 1] <- c(1:((sum(Omega) - V)/2 + V))
+    Omega.temp <- Omega.temp + t(Omega.temp) - diag(diag(Omega.temp))
+    Q <- matrix(0, nrow = V^2, ncol = (sum(Omega)-V)/2 + V)
+    Q[cbind(c(1:V^2), c(Omega.temp))] <- 1
+    
+    
+    ### Setup Transpositon matrix such that vec(t(I-B)) = Tr %*% vec(I-B)
+    Tr <- matrix(0, nrow = V^2, ncol = V ^2)
+    Tr[matrix(c(1:V^2, (rep(c(1:V), V)-1) *V + rep(c(1:V), each = V)), ncol = 2)] <- 1
+    
+    ### precompute quantities of interest
+    omega.inv <- solve(Omega.hat)
+    eye.minus.b.inv <- solve(diag(rep(1, V)) - B.hat)
+    
+    
+    if(type == "expected"){
+      ## Expected Information where we assume E(S) = Sigma
+      
+      # information for beta elements
+      I[1:sum(B), 1:sum(B)] <- t(P) %*% (S %x% omega.inv + (eye.minus.b.inv %x% t(eye.minus.b.inv)) %*% Tr) %*% P
+      
+      # information for omega elements
+      I[-c(1:sum(B)),-c(1:sum(B))] <- 1/2 * t(Q) %*% (omega.inv %x% omega.inv) %*% Q
+      
+      # co-information
+      I[c(1:sum(B)),-c(1:sum(B))] <- t(P) %*% ( eye.minus.b.inv %x% omega.inv) %*% Q
+      I[-c(1:sum(B)),c(1:sum(B))] <- t(I[c(1:sum(B)),-c(1:sum(B))])
+      
+    } else if (type == "observed"){
+      ## Observed Information where we do not assume E(S) = Sigma
+      
+      # precompute term
+      back_term <- omega.inv %*% (diag(rep(1, V)) - B.hat) %*% S %*% t((diag(rep(1, V)) - B.hat)) %*% omega.inv
+      
+      # information for beta elements
+      I[1:sum(B), 1:sum(B)] <- t(P) %*% (S %x% omega.inv + (eye.minus.b.inv %x% t(eye.minus.b.inv)) %*% Tr) %*% P
+      
+      # information for omega elements (notice difference between this and expected info above)
+      I[-c(1:sum(B)),-c(1:sum(B))] <- -1/2 * t(Q) %*%((omega.inv %x% omega.inv) - (omega.inv %x% back_term) - 
+           (back_term %x% omega.inv)) %*% Q
+      
+      # co-information for omega elements
+      I[c(1:sum(B)),-c(1:sum(B))] <- t(P) %*% ((S %*% t(diag(rep(1, V)) - B.hat) %*% omega.inv) %x% omega.inv) %*% Q
+      I[-c(1:sum(B)),c(1:sum(B))] <- t(I[c(1:sum(B)),-c(1:sum(B))])
+    }
+    
+    # return inverse of FI
+    return(solve(I)/n)
+    
+  } else if (type == "sandwich") {
+    #### Sandwich Variance based on misspecified model ####
+    
+    V <- dim(B)[1]
+    
+    S <- Y %*% t(Y) / dim(Y)[2]
+    
+    ## Setup permutation matrix P for B
+    P <- matrix(0, nrow = V^2, ncol = sum(B))
+    temp <- matrix(c(which(c(B)==1),1:sum(B)), nrow = sum(B), ncol = 2)
+    P[temp] <- 1
+    
+    
+    ## Setup permutation matrix Q for Omega
+    Omega.temp <- matrix(0, nrow = V, ncol = V)
+    Omega.temp[lower.tri(Omega.temp, diag = T) & Omega == 1] <- c(1:((sum(Omega) - V)/2 + V))
+    Omega.temp <- Omega.temp + t(Omega.temp) - diag(diag(Omega.temp))
+    Q <- matrix(0, nrow = V^2, ncol = (sum(Omega)-V)/2 + V)
+    Q[cbind(c(1:V^2), c(Omega.temp))] <- 1
+    
+    
+    ## Setup Transpositon matrix such that vec(t(I-B)) = Tr %*% vec(I-B)
+    Tr <- matrix(0, nrow = V^2, ncol = V ^2)
+    Tr[matrix(c(1:V^2, (rep(c(1:V), V)-1) *V + rep(c(1:V), each = V)), ncol = 2)] <- 1
+    
+    ## precompute quantities of interest
+    omega.inv <- solve(Omega.hat)
+    eye.minus.b.inv <- solve(diag(rep(1, V)) - B.hat)
+    omega.inv.eye.minus.b <- omega.inv %*% (diag(rep(1, V)) - B.hat)
+    
+    K <- J <-  matrix(0, nrow = sum(B) + (sum(Omega)-V)/2 + V,
+                      ncol = sum(B) + (sum(Omega)-V)/2 + V)
+    
+    for(i in 1:dim(Y)[2]){
+      l <- c(t(P) %*% c(omega.inv.eye.minus.b %*% (Y[,i] %*% t(Y[,i])) - t(eye.minus.b.inv)),
+             t(Q) %*% c(omega.inv - omega.inv.eye.minus.b %*% Y[,i] %*% t(Y[,i]) %*% t(omega.inv.eye.minus.b)) / (-2) ) 
+      K <- K + l %*% t(l)
+    }
+    K <- K / dim(Y)[2]
+    
+    # precompute term
+    back_term <- omega.inv %*% (diag(rep(1, V)) - B.hat) %*% S %*% t((diag(rep(1, V)) - B.hat)) %*% omega.inv
+    
+    # information for beta elements
+    J[1:sum(B), 1:sum(B)] <- t(P) %*% (S %x% omega.inv + (eye.minus.b.inv %x% t(eye.minus.b.inv)) %*% Tr) %*% P
+    
+    # information for omega elements (notice difference between this and expected info above)
+    J[-c(1:sum(B)),-c(1:sum(B))] <- -1/2 * t(Q) %*%((omega.inv %x% omega.inv) - (omega.inv %x% back_term) - 
+                                                      (back_term %x% omega.inv)) %*% Q
+    
+    # co-information for omega elements
+    J[c(1:sum(B)),-c(1:sum(B))] <- t(P) %*% ((S %*% t(diag(rep(1, V)) - B.hat) %*% omega.inv) %x% omega.inv) %*% Q
+    J[-c(1:sum(B)),c(1:sum(B))] <- t(J[c(1:sum(B)),-c(1:sum(B))])
+    
+    # return estimate of variance
+    return(solve(J) %*%K %*% t(solve(J)) / n)
+  } else {
+    stop("Invalid type given. Options are: observed, expected, sandwich")
+  }
+
 }
+
+
