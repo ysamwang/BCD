@@ -10,7 +10,7 @@ fitEL <- function(Y, B, Omega, B.hat = NULL, Omega.hat = NULL, mu.hat = NULL, me
   if(!naive){
     if(is.null(B.hat)){
       out_ricf_init <- ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
-                            OmegaInit = NULL, sigConv = 0, maxIter = 5,
+                            OmegaInit = NULL, sigConv = 0, maxIter = 0,
                             msgs = FALSE, omegaInitScale = .9)
       init_val = c(out_ricf_init$BHat[B==1])
     } else {
@@ -32,7 +32,7 @@ fitEL <- function(Y, B, Omega, B.hat = NULL, Omega.hat = NULL, mu.hat = NULL, me
                        dual_r = rep(0, num_dual_vars), tol = tol, max_iter = maxInnerIter,
                        meanEst = meanEst, method = method, control = list(fnscale = -1))
 
-    fitted_mod <- sem_el_fit_weights(optim_out$par,y_r = Y, omega_r = Omega, b_r = B,
+    fitted_mod <- sem_el_fit_weights(optim_out$par, y_r = Y, omega_r = Omega, b_r = B,
                                    dual_r = rep(0, num_dual_vars), tol = tol, max_iter = maxInnerIter, meanEst = meanEst)
     B.hat <- matrix(0, nrow = V, ncol = V)
     

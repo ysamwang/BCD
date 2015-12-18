@@ -24,7 +24,7 @@ sigma <- temp %*% Omega.true %*% t(temp)
 sigma
 
 sim.size <- 1000
-n.list <- c(500,1000, 5000)
+n.list <- c(100, 200, 500, 800)
 dist.list <- c("gauss", "t", "lognormal")
 
 
@@ -63,8 +63,8 @@ for(dist in dist.list){
                        msgs = FALSE, omegaInitScale = .9)
 
       
-      el_fit_null <- fitEL(Y = Y, B = B, Omega = Omega, ties = F, meanEst = 1)
-      el_fit_null_no_mean <- fitEL(Y = Y, B = B, Omega = Omega, ties = F, meanEst = 0)
+      el_fit_null <- fitEL(Y = Y, B = B, Omega = Omega, meanEst = 1)
+      el_fit_null_no_mean <- fitEL(Y = Y, B = B, Omega = Omega, meanEst = 0)
       
       
       b.vec.ricf <- out_ricf$BHat[B == 1]
@@ -96,9 +96,9 @@ for(dist in dist.list){
                                                            
     }
   }
-#   saveRDS(error.b / sim.size, paste("record_b_",dist,".RDS", sep = ""))
-#   saveRDS(error.o / sim.size, paste("record_o_",dist,".RDS", sep = ""))
-#   saveRDS(reconstruct / sim.size, paste("record_sigma_",dist,".RDS", sep = ""))
+  saveRDS(error.b / sim.size, paste("record_b_",dist,".RDS", sep = ""))
+  saveRDS(error.o / sim.size, paste("record_o_",dist,".RDS", sep = ""))
+  saveRDS(reconstruct / sim.size, paste("record_sigma_",dist,".RDS", sep = ""))
 }
 
 

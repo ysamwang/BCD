@@ -6,8 +6,10 @@
 #include <math.h>
 #include <RcppArmadillo.h>
 #include "elSEM.h"
-#include "elSEMTies.h"
+#include "elSEM_fixed.h"
 #include "elSEM_naive.h"
+#include "elSEM_euclid.h"
+
 
 using namespace Rcpp ;
 using namespace arma;

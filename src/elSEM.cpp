@@ -1,5 +1,7 @@
 #include "elSEM.h"
 
+el_sem::el_sem(){}
+
 el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r, int meanEst)
 {
     //matrix which holds the observed data

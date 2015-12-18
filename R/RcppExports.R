@@ -21,6 +21,10 @@ sem_el_naive_fit_weights <- function(weights_r, y_r, omega_r, b_r, dual_r, tol, 
     .Call('BCD_sem_el_naive_fit_weights', PACKAGE = 'BCD', weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst)
 }
 
+sem_el_fit_obj_one_fixed <- function(b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst, b_fixed, row_ind, col_ind) {
+    .Call('BCD_sem_el_fit_obj_one_fixed', PACKAGE = 'BCD', b_weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst, b_fixed, row_ind, col_ind)
+}
+
 sem_el_euclid_fit_obj <- function(b_weights_r, y_r, omega_r, b_r) {
     .Call('BCD_sem_el_euclid_fit_obj', PACKAGE = 'BCD', b_weights_r, y_r, omega_r, b_r)
 }

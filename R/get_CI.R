@@ -14,7 +14,7 @@
 #' variance as defined in Qin and Lawless 1994 or "profile" for profile confiendence intervals
 #' @return The (scaled by n) estimated covariance matrix or profile confidence intervals
 #' @export
-var.el <- function(Y, B, Omega, B.hat, Omega.hat = NULL, p = NULL, cutoff = NULL, grid = 1e-3, type = "asymptotic")
+var.el <- function(Y, B, Omega, B.hat, Omega.hat = NULL, p = NULL, cutoff = NULL, grid = 5e-3, type = "asymptotic")
 {
   if(type == "asymptotic"){
     # Index of non-zero B's in proper order (column by column)
@@ -81,7 +81,7 @@ var.el <- function(Y, B, Omega, B.hat, Omega.hat = NULL, p = NULL, cutoff = NULL
     
     return(solve(t(dg) %*% solve(g.var) %*% dg) /n)
     
-  } else if(type == "profile"){
+  } else if(type == "profile-fixed"){
     
     columns <- matrix(c(1:V), nrow = V, ncol = V, byrow = T)
     rows <- matrix(c(1:V), nrow = V, ncol = V)
@@ -91,13 +91,28 @@ var.el <- function(Y, B, Omega, B.hat, Omega.hat = NULL, p = NULL, cutoff = NULL
     ret[, 2] <- B.hat[which(B == 1)]
     
     for(i in 1:dim(beta.indices)[1]){
-      ret[i, -2] <- .profile.like(Y, B, Omega, B.hat, cutoff, index = i, grid = grid)
+      ret[i, -2] <- .profile.like.fixed(Y, B, Omega, B.hat, cutoff, index = i, grid = grid)
+    }
+    
+    colnames(ret) <- c("Lower", "Estimate", "Upper", "Lower-LRT", "Upper-LRT")
+    return(ret)
+  }  else if(type == "profile-full"){
+    columns <- matrix(c(1:V), nrow = V, ncol = V, byrow = T)
+    rows <- matrix(c(1:V), nrow = V, ncol = V)
+    beta.indices <- cbind(rows[which(B==1)], columns[which(B==1)])
+    
+    ret <- matrix(0, nrow = dim(beta.indices)[1], ncol = 5)
+    ret[, 2] <- B.hat[which(B == 1)]
+    method = "Nelder"
+    
+    for(i in 1:dim(beta.indices)[1]){
+      ret[i, -2] <- .profile.like.full(Y, B, Omega, B.hat, cutoff, grid, beta.indices[i,1], beta.indices[i,2], method = method)
     }
     
     colnames(ret) <- c("Lower", "Estimate", "Upper", "Lower-LRT", "Upper-LRT")
     return(ret)
   } else {
-    stop("Invalid type given. Options are: asymptotic, profile")
+    stop("Invalid type given. Options are: asymptotic, profile-fixed, profile-full")
   }
   
 }
@@ -124,7 +139,7 @@ var.el <- function(Y, B, Omega, B.hat, Omega.hat = NULL, p = NULL, cutoff = NULL
 }
 
 
-.profile.like <- function(Y, B, Omega, B.hat, cutoff, index, grid = 1e-3) {
+.profile.like.fixed <- function(Y, B, Omega, B.hat, cutoff, index, grid = 1e-3) {
   tol = 1e-6
   maxInnerIter = 100
   mu.hat = NULL
@@ -164,6 +179,68 @@ var.el <- function(Y, B, Omega, B.hat, Omega.hat = NULL, p = NULL, cutoff = NULL
 
 
 
+.profile.like.full <- function(Y, B, Omega, B.hat, cutoff, grid, row.ind, col.ind, method = method) {
+  tol = 1e-6
+  maxInnerIter = 100
+  meanEst = 0
+  
+  
+  B.mod <- B 
+  B.mod[row.ind, col.ind] <- 0
+  
+  init_val <- B.hat[B.mod == 1]
+  
+  # record minimizer point
+  point.est <- B.hat[row.ind, col.ind]
+  
+  
+  # Lower bound
+  LRT <- 0
+  while(LRT < cutoff){
+    
+    B.hat[row.ind, col.ind] <- B.hat[row.ind, col.ind] - grid  
+    optim_out <- optim(par = init_val, fn = sem_el_fit_obj_one_fixed, gr = NULL,
+                       y_r = Y, omega_r = Omega, b_r = B.mod,
+                       dual_r = rep(0, V + sum(Omega == 0)/2),
+                       tol = tol, max_iter = maxInnerIter,
+                       meanEst = meanEst, b_fixed = B.hat[row.ind, col.ind], row_ind = row.ind, col_ind = col.ind,
+                       method = method, control = list(fnscale = -1))
+    
+    B.hat[B.mod == 1] <- optim_out$par
+    fitted_mod <- sem_el_fit_weights(c(B.hat[B == 1]), y_r = Y, omega_r = Omega, b_r = B,
+                                     dual_r = rep(0, V + sum(Omega == 0)/2),
+                                     tol = tol, max_iter = maxInnerIter, meanEst = meanEst)
+    LRT <- -2 * sum(log(n / c(fitted_mod$d)))
+  }
+  lower <- B.hat[row.ind, col.ind] + grid
+  lower.lrt <- LRT
+  
+  
+  
+  # Upper bound
+  LRT <- 0
+  B.hat[row.ind, col.ind] <- point.est
+  
+  while(LRT < cutoff){
+    
+    B.hat[row.ind, col.ind] <- B.hat[row.ind, col.ind] + grid  
+    optim_out <- optim(par = init_val, fn = sem_el_fit_obj_one_fixed, gr = NULL,
+                       y_r = Y, omega_r = Omega, b_r = B.mod,
+                       dual_r = rep(0, V + sum(Omega == 0)/2),
+                       tol = tol, max_iter = maxInnerIter,
+                       meanEst = meanEst, b_fixed = B.hat[row.ind, col.ind], row_ind = row.ind, col_ind = col.ind,
+                       method = method, control = list(fnscale = -1))
+    
+    B.hat[B.mod == 1] <- optim_out$par
+    fitted_mod <- sem_el_fit_weights(c(B.hat[B == 1]), y_r = Y, omega_r = Omega, b_r = B,
+                                     dual_r = rep(0, V + sum(Omega == 0)/2),
+                                     tol = tol, max_iter = maxInnerIter, meanEst = meanEst)
+    LRT <- -2 * sum(log(n / c(fitted_mod$d)))
+  }
+  upper <- B.hat[row.ind, col.ind] - grid
+  upper.lrt <- LRT
+  return(c(lower, upper, lower.lrt, upper.lrt))
+}
 
 
 
