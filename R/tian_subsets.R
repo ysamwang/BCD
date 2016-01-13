@@ -25,8 +25,9 @@ tian.subsets <- function(Y, B, Omega, Omega.hat){
     set <- connected.subsets[[i]]$set
     pa <- connected.subsets[[i]]$parents
     B.mod <- B[c(set, pa), c(set, pa) ]
-    Y.mod <- Y[c(set, pa), ]
-    Omega.mod <- Omega[c(set, pa), c(set, pa) ]
+    B.mod[-c(1:length(set)), ] <- 0 
+    Y.mod <- Y[c(set, pa), ]  
+    Omega.mod <- Omega[c(set, pa), c(set, pa) ] 
     Omega.mod[-c(1:length(set)), ] <- 1
     Omega.mod[,-c(1:length(set))] <- 1
     mod <- fitEL(Y.mod, B.mod, Omega.mod)
@@ -34,5 +35,7 @@ tian.subsets <- function(Y, B, Omega, Omega.hat){
     Omega.est[set, set]  <- mod$Omega.hat[c(1:length(set)), c(1:length(set))]
   }
   
-  return(list(B.est, Omega.est))
+  return(list(B.hat = B.est, Omega.hat = Omega.est))
 }
+
+

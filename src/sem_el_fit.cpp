@@ -5,10 +5,10 @@
 
 //[[Rcpp::depends(RcppArmadillo)]]
 //[[Rcpp::export]]
-double sem_el_fit_obj(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r, double tol, int max_iter, int meanEst) {
+double sem_el_fit_obj(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r, double tol, int max_iter, int meanEst, int high_moments) {
 
     //initialize graph object
-  el_sem graph = el_sem(b_weights_r, y_r, omega_r, b_r, dual_r, meanEst);
+  el_sem graph = el_sem(b_weights_r, y_r, omega_r, b_r, dual_r, meanEst, high_moments);
 
   double ret = graph.update_dual(tol, max_iter);
   return ret;
@@ -16,10 +16,10 @@ double sem_el_fit_obj(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP 
 
 //[[Rcpp::depends(RcppArmadillo)]]
 //[[Rcpp::export]]
-Rcpp::List sem_el_fit_weights(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r, double tol, int max_iter, int meanEst) {
+Rcpp::List sem_el_fit_weights(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r, double tol, int max_iter, int meanEst, int high_moments) {
 
     //initialize graph object
-  el_sem graph = el_sem(b_weights_r, y_r, omega_r, b_r, dual_r, meanEst);
+  el_sem graph = el_sem(b_weights_r, y_r, omega_r, b_r, dual_r, meanEst, high_moments);
   double objective = graph.update_dual(tol, max_iter);
   return Rcpp::List::create(Rcpp::Named("d", graph.get_d()),
                             Rcpp::Named("iter", graph.get_iter()),

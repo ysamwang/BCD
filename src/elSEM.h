@@ -13,7 +13,7 @@ class el_sem
 {
 public:
     // Initialize sem object:
-    el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r,SEXP b_r , SEXP dual_r, int meanEst);
+    el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r,SEXP b_r , SEXP dual_r, int meanEst, int high_moments);
     el_sem();
 
     double update_dual(double tol, int max_iter);
@@ -31,11 +31,13 @@ protected:
 
     int v_;
     int n_;
+    int high_moments_;
     int counter_;
     double conv_crit_;
 
     void set_gradient_hessian(vec &grad, mat &hessian);
     int backtracking(vec update);
+
 
 private:
 };
