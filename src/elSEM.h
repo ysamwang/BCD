@@ -13,7 +13,7 @@ class el_sem
 {
 public:
     // Initialize sem object:
-    el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r,SEXP b_r , SEXP dual_r, int meanEst, int high_moments);
+    el_sem(SEXP b_weights_r, SEXP y_r, SEXP b_r, SEXP moment_2_restrictions_r, SEXP moment_3_restrictions_r, SEXP moment_4_restrictions_r, int meanEst);
     el_sem();
 
     double update_dual(double tol, int max_iter);
@@ -26,12 +26,10 @@ protected:
     vec d_; //vector of denominators of p_n (ie p_n = 1 / d_(n))
     vec dual_; // dual variables
 
-    uvec gamma_indices_;
     mat constraints_;
 
     int v_;
     int n_;
-    int high_moments_;
     int counter_;
     double conv_crit_;
 

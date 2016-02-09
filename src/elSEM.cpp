@@ -2,11 +2,9 @@
 
 el_sem::el_sem() {}
 
-el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r, int meanEst, int high_moments)
+el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP b_r, SEXP moment_2_restrictions_r, SEXP moment_3_restrictions_r,  SEXP moment_4_restrictions_r, int meanEst)
 {
-    high_moments_ = high_moments;
-    //matrix which holds the observed data
-    mat y = as<arma::mat>(y_r);
+    mat y = as<arma::mat>(y_r); //matrix which holds the observed data
     n_ = y.n_cols; //number of observations
     v_ = y.n_rows; //number of variables
     counter_ = 0; //number of iterations
@@ -17,128 +15,104 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r,
     vec means = vec(v_, fill::zeros); //non-zero means
     mat b_weights = mat(v_, v_, fill::zeros); // matrix with edge weights
 
-    if(meanEst)
-    {
+    if(meanEst) {
         means = as<arma::vec>(b_weights_r).head(v_);
         b_weights.elem(b_spots) = as<arma::vec>(b_weights_r).tail(as<arma::vec>(b_weights_r).n_elem - v_);
 
-    }
-    else
-    {
+    } else {
         b_weights.elem(b_spots) = as<arma::vec>(b_weights_r);
     }
 
 
-    dual_ = as<arma::vec>(dual_r); //dual variables
+    // Initialize the matrix of constraints and the vector of dual variables (start at 0)
+    mat moment_2_restrictions = as<arma::mat>(moment_2_restrictions_r);
+    mat moment_3_restrictions;
+    mat moment_4_restrictions;
 
-    gamma_indices_ = arma::find(trimatu(as<arma::mat>(omega_r) == 0 )); //structural 0's in Omega
-
-    if(high_moments)
-    {
-        constraints_ = mat(v_ + 3 * gamma_indices_.n_elem, n_);  //constraints containing mean and covariance  and 3rd moment restrictions
-
+    if(!Rf_isNull(moment_4_restrictions_r)) {
+        moment_4_restrictions = as<arma::mat>(moment_4_restrictions_r);
+        moment_3_restrictions = as<arma::mat>(moment_3_restrictions_r);
+        constraints_ = mat(v_ + moment_2_restrictions.n_rows + moment_3_restrictions.n_rows + moment_4_restrictions.n_rows, n_);  //constraints containing mean and covariance  and 3rd moment restrictions
+    } else if(!Rf_isNull(moment_3_restrictions_r)) {
+        moment_3_restrictions = as<arma::mat>(moment_3_restrictions_r);
+        constraints_ = mat(v_ + moment_2_restrictions.n_rows + moment_3_restrictions.n_rows, n_);  //constraints containing mean and covariance  and 3rd moment restrictions
+    } else {
+        constraints_ = mat(v_ + moment_2_restrictions.n_rows, n_);  //constraints containing mean and covariance restrictions
     }
-    else
-    {
-        constraints_ = mat(v_ + gamma_indices_.n_elem, n_);  //constraints containing mean and covariance restrictions
-    }
 
-    constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights) * y; //mean restrictions
+    dual_ = vec(constraints_.n_rows, fill::zeros);
 
-    if(meanEst)
-    {
+
+    // Filling in the constraint matrix
+
+    // Mean restrictions
+    constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights) * y;
+    // if there is a non-zero mean vector
+    if(meanEst) {
         constraints_.rows(0, v_ - 1).each_col() -= means;
     }
 
 
-    //covariance restrictions
-    int i,j,k;
 
-
-    if(high_moments)
-    {
-        for(k = 0; k < gamma_indices_.n_elem; k++)
-        {
-            j = (int) gamma_indices_(k) / v_;
-            i = (int) gamma_indices_(k) % v_;
-
-            // 2nd moment constraint
-            constraints_.row(k + v_) = constraints_.row(i) % constraints_.row(j);
-
-            // 3rd moment constraint
-            constraints_.row(k + v_ + gamma_indices_.n_elem) = square(constraints_.row(i)) % constraints_.row(j);
-            constraints_.row(k + v_ + 2 * gamma_indices_.n_elem) = constraints_.row(i) % square(constraints_.row(j));
-        }
+    // covariance restrictions
+    int k;
+    for(k = 0; k < moment_2_restrictions.n_rows; k++) {
+        // 2nd moment constraint
+        constraints_.row(k + v_) = constraints_.row( moment_2_restrictions(k, 0) ) % constraints_.row( moment_2_restrictions(k, 1) );
     }
-    else
-    {
-        for(k = 0; k < gamma_indices_.n_elem; k++)
-        {
-            j = (int) gamma_indices_(k) / v_;
-            i = (int) gamma_indices_(k) % v_;
-            constraints_.row(k + v_) = constraints_.row(i) % constraints_.row(j);
+
+    //3rd moment restrictions if needed
+    if(!Rf_isNull(moment_3_restrictions_r)) {
+        for(k = 0; k < moment_3_restrictions.n_rows; k++) {
+            constraints_.row(k + v_ + moment_2_restrictions.n_rows) = constraints_.row( moment_3_restrictions(k, 0) ) %
+                    constraints_.row( moment_3_restrictions(k, 1) ) % constraints_.row( moment_3_restrictions(k, 2) );
         }
     }
 
+    if(!Rf_isNull(moment_4_restrictions_r)) {
+        for(k = 0; k < moment_4_restrictions.n_rows; k++) {
+            constraints_.row(k + v_ + moment_2_restrictions.n_rows + moment_3_restrictions.n_rows) = constraints_.row( moment_4_restrictions(k, 0) ) %
+                    constraints_.row( moment_4_restrictions(k, 1) ) % constraints_.row( moment_4_restrictions(k, 2) ) % constraints_.row( moment_4_restrictions(k, 3) );
+        }
+    }
 
     d_ = (constraints_.t() * dual_) + 1.0;
 }
 
 double el_sem::update_dual(double tol, int max_iter)
 {
-  vec grad;
-  vec update;
-  mat hessian;
-
-    //pre-allocate memory for gradient, hessian and update
-
-    if(high_moments_){
-        grad.set_size(v_ + 3 * gamma_indices_.n_elem );
-        hessian.set_size(v_ + 3 * gamma_indices_.n_elem , v_ + 3 * gamma_indices_.n_elem );
-        update.set_size(v_ + 3 * gamma_indices_.n_elem );
-
-    }
-    else {
-        grad.set_size(v_ + gamma_indices_.n_elem );
-        hessian.set_size(v_ + gamma_indices_.n_elem , v_ + gamma_indices_.n_elem );
-        update.set_size(v_ + gamma_indices_.n_elem );
-    }
-
-    grad.zeros();
-    hessian.zeros();
-    update.zeros();
-
+    vec grad(constraints_.n_rows, fill::zeros);
+    vec update(constraints_.n_rows, fill::zeros);
+    mat hessian(constraints_.n_rows, constraints_.n_rows, fill::zeros);
 
     // backtracking parameters
     double backtracking_scaling_const = .4;
     int back_tracking_counter;
     int max_back_track = 20; // steps required to scale update by 1e-8
 
-    while(conv_crit_ > tol && counter_ < max_iter)
-    {
+    while(conv_crit_ > tol && counter_ < max_iter) {
 
 
         // build in backtracking if necessary
         set_gradient_hessian(grad, hessian);
 
         // back tracking line search
+        if (cond(hessian) > 1e4) {
+//            Rcout << "d: " << endl << d_ << endl;
+        }
 
         update = solve(hessian, grad);
 
         back_tracking_counter = 0;
-        while(!backtracking(update) && back_tracking_counter < max_back_track)
-        {
+        while(!backtracking(update) && back_tracking_counter < max_back_track) {
             update *= backtracking_scaling_const;
             back_tracking_counter++;
         }
         //if back tracking does not terminate because of max iterations update
         //else terminate
-        if(back_tracking_counter < max_back_track)
-        {
+        if(back_tracking_counter < max_back_track) {
             dual_ -= update;
-        }
-        else
-        {
+        } else {
             return -99999;
         }
 
@@ -148,12 +122,9 @@ double el_sem::update_dual(double tol, int max_iter)
     }
 
     d_ = (constraints_.t() * dual_) + 1.0;
-    if(conv_crit_ < tol)
-    {
+    if(conv_crit_ < tol) {
         return -sum(log(n_ * d_));
-    }
-    else
-    {
+    } else {
         return -99999;
     }
 
@@ -172,8 +143,7 @@ void el_sem::set_gradient_hessian(vec &grad, mat &hessian)
     d_ = (constraints_.t() * dual_) + 1.0;
     grad = - sum( constraints_ * diagmat( 1.0 / d_), 1);
 
-    for(i = 0; i < n_ ; i ++)
-    {
+    for(i = 0; i < n_ ; i ++) {
         hessian += constraints_.col(i) * constraints_.col(i).t() / pow(d_(i), 2);
     }
 }
