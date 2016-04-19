@@ -33,3 +33,7 @@ sem_el_euclid_fit_weights <- function(b_weights_r, y_r, b_r, moment_2_restrictio
     .Call('BCD_sem_el_euclid_fit_weights', PACKAGE = 'BCD', b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, meanEst)
 }
 
+sem_el_fit_obj_l1 <- function(b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, tol, max_iter, meanEst, penalty) {
+    .Call('BCD_sem_el_fit_obj_l1', PACKAGE = 'BCD', b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, tol, max_iter, meanEst, penalty)
+}
+

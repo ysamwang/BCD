@@ -165,3 +165,25 @@ int el_sem::get_iter()
 {
     return counter_;
 }
+
+
+//return iterations used
+vec el_sem::get_dual()
+{
+    return dual_;
+}
+
+vec el_sem::getGradient()
+{
+  vec logEL_gradient(dual_.n_rows);
+  logEL_gradient.zeros();
+  int n;
+  
+  for(n = 0; n < n_; n++){
+    logEL_gradient += dual_.t() *  /d_(n);
+  }
+  
+  
+  //need to finish
+  
+}

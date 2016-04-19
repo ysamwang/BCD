@@ -155,3 +155,23 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// sem_el_fit_obj_l1
+double sem_el_fit_obj_l1(SEXP b_weights_r, SEXP y_r, SEXP b_r, SEXP moment_2_restrictions_r, SEXP moment_3_restrictions_r, SEXP moment_4_restrictions_r, double tol, int max_iter, int meanEst, double penalty);
+RcppExport SEXP BCD_sem_el_fit_obj_l1(SEXP b_weights_rSEXP, SEXP y_rSEXP, SEXP b_rSEXP, SEXP moment_2_restrictions_rSEXP, SEXP moment_3_restrictions_rSEXP, SEXP moment_4_restrictions_rSEXP, SEXP tolSEXP, SEXP max_iterSEXP, SEXP meanEstSEXP, SEXP penaltySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type b_weights_r(b_weights_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type moment_2_restrictions_r(moment_2_restrictions_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type moment_3_restrictions_r(moment_3_restrictions_rSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type moment_4_restrictions_r(moment_4_restrictions_rSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
+    Rcpp::traits::input_parameter< int >::type meanEst(meanEstSEXP);
+    Rcpp::traits::input_parameter< double >::type penalty(penaltySEXP);
+    __result = Rcpp::wrap(sem_el_fit_obj_l1(b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, tol, max_iter, meanEst, penalty));
+    return __result;
+END_RCPP
+}

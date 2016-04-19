@@ -3,9 +3,16 @@ Type: Package
 Title: Linear Structural Equations with Gaussian Errors
 Version: 0.0.99
 Date: 2015-08-18
-Authors: c(person("Christopher", "Fox", role = "aut", comment = "original R functions"), person("Y. Samuel", "Wang", role = "aut", comment = "Rcpp implementation", email = "ysamwang@uw.edu"), person("Mathias", "Drton", role = "aut"))
+Authors: c(person("Christopher", "Fox", role = "aut", comment = "original
+    R functions"), person("Y. Samuel", "Wang", role = "aut", comment = "Rcpp
+    implementation", email = "ysamwang@uw.edu"), person("Mathias", "Drton", role =
+    "aut"))
 Maintainer: Y. Samuel Wang <ysamwang@uw.edu>
-Description: Estimate mixed linear structural equation models without latent    variables. The structural equation model can be recursive (acyclic) or non-   recursive (cyclic).
+Description: Estimate mixed linear structural equation models without latent
+    variables. The structural equation model can be recursive (acyclic) or non-
+    recursive (cyclic).
 License: GPL (>= 2)
-Imports: Rcpp (>= 0.12.0)
+Imports:
+    Rcpp (>= 0.12.0)
 LinkingTo: Rcpp, RcppArmadillo (>= 0.5.400.2.0)
+RoxygenNote: 5.0.1

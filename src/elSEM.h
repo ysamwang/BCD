@@ -21,6 +21,9 @@ public:
 
     double get_conv_crit();
     int get_iter();
+    double getBsum();
+    vec get_dual();
+    vec getGradient();
 
 protected:
     vec d_; //vector of denominators of p_n (ie p_n = 1 / d_(n))

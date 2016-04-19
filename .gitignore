@@ -6,4 +6,26 @@ src/*.so
 src/*.dll
 " (office's conflicted copy 2015-10-01).RData"
 *.RDS
-*.png
+.png
+causal_discovery_10.png
+causal_discovery_5.png
+causal_discovery_6.png
+causal_discovery_7.png
+causal_discovery_8.png
+causal_discovery_9.png
+logMSE_b_gauss.png
+logMSE_b_lognormal.png
+logMSE_b_t.png
+logMSE_o_gauss.png
+logMSE_o_lognormal.png
+logMSE_o_t.png
+record_b_gauss.RDS
+record_b_lognormal.RDS
+record_b_t.RDS
+record_o_gauss.RDS
+record_o_lognormal.RDS
+record_o_t.RDS
+record_sigma_gauss.RDS
+record_sigma_lognormal.RDS
+record_sigma_t.RDS
+se_vs_ci.png

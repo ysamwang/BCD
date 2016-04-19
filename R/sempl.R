@@ -10,26 +10,52 @@
 #'    a default initialization will be used. 
 #' @param Omega.hat V by V matrix giving initial edge weights for bi-directed edges
 #' @param mu.hat Initial value for means  
-#' @param optim.method
 #' @param tol
 #' @param maxInnerIter
 #' @param outerTol
 #' @param meanEst
 #' @param type profile, naive, euclid
-#' @param high_moments
+#' @param overIdRestrict
 #' @export
-fitEL <- function(Y, B, Omega, B.hat = NULL, Omega.hat = NULL, optim.method = "BFGS",
-                  tol = 1e-6, maxInnerIter = 500, outerTol = 1e-6, meanEst = 0, type = "profile" , high_moments = 2){
+sempl <- function(Y, B, Omega, B.hat = NULL, Omega.hat = NULL, mu.hat = NULL, meanEst = T,
+                  overIdRestrict = NULL, type = "profile"){
+  
+  ##############
+  # Initialize #
+  ##############
+  
+  # number of nodes
+  V <- dim(B)[1]
+  
+  ## Using RICF initialization if necessary
+  if(is.null(B.hat) | (is.null(Omega.hat) & type == "naive")) {
+      out_ricf_init <- ricf(B = B, Omega = Omega, Y = Y - rowMeans(Y), BInit = NULL,
+                            OmegaInit = NULL, sigConv = 0, maxIter = 0,
+                            msgs = FALSE, omegaInitScale = .9)
+
+  }
+  
+  ## Set B.hat if necessary
+  if(is.null(B.hat)){
+    B.hat <- out_ricf_init$bHat
+  }
+  
+  ## Set Omega.hat if necessary
+  if((is.null(Omega.hat) & type == "naive")){
+    Omega.hat <- out_ricf_init$omegaHat
+  }
+  
+  ## Set mu.hat if necessary
+  if((is.null(mu.hat) & meanEst)){
+    mu.hat <- solve(diag(rep(1,V)) - B.hat, rowMeans(Y))
+  }
   
   
+
+
   if(type == "profile"){
-    V <- dim(B)[1]
     
-    if(meanEst){
-      mu.hat <- rowMeans(Y)
-    } else {
-      mu.hat <- rep(0, V)
-    }
+    
     
     if(is.null(B.hat)){
         out_ricf_init <- ricf(B = B, Omega = Omega, Y = Y - mu.hat, BInit = NULL,
