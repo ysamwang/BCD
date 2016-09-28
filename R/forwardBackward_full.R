@@ -49,18 +49,21 @@ forwardBackwardFull <- function(Y, moments = 3, meanEst = 1,
       Omega[i, j] <- Omega[j, i] <- 0
       ### Tests ####
       
+      covarRestrict_temp <- which(Omega == 0 & lower.tri(Omega), arr.ind = T)
+      covarRestrict_temp <- rbind(cbind(covarRestrict_temp, matrix(-1, nrow = dim(covarRestrict_temp)[1], ncol = 2)),
+                                  cbind(covarRestrict_temp, covarRestrict_temp[,1], matrix(-1, nrow = dim(covarRestrict_temp)[1], ncol = 1)),
+                                  cbind(covarRestrict_temp, covarRestrict_temp[,2], matrix(-1, nrow = dim(covarRestrict_temp)[1], ncol = 1)),
+                                  cbind(covarRestrict_temp, covarRestrict_temp[,c(1, 1)]),
+                                  cbind(covarRestrict_temp, covarRestrict_temp[,c(2,2)]))
+      
       # edge i <- j
-      el_fit1 <- fitEL(Y = Y, B = B1, Omega = Omega,
-                       meanEst = meanEst, type = fwdType,
-                       high_moments = moments, optim.method = "BFGS",
-                       tol = innerTol, outerTol = optimTol)
+          
+            el_fit1 <- sempl_cd(Y = Y, B = B1, Omega = Omega,
+                                covarRestrict = covarRestrict_temp, meanEst = meanEst)
       
       # edge i -> j
-      el_fit2 <- fitEL(Y = Y, B = B2, Omega = Omega,
-                       meanEst = meanEst, type = fwdType,
-                       high_moments = moments, optim.method = "BFGS",
-                       tol = innerTol, outerTol = optimTol)
-      
+            el_fit1 <- sempl_cd(Y = Y, B = B2, Omega = Omega,
+                                covarRestrict = covarRestrict_temp, meanEst = meanEst)
       
         
         if (printStatus){
@@ -69,12 +72,11 @@ forwardBackwardFull <- function(Y, moments = 3, meanEst = 1,
         }
         
         
-        if (el_fit2$lrt >  el_fit1$lrt  ){
-          # B[i, j] <- 1
-          lr.stat[k, ] <- c(i, j, el_fit2$lrt -  el_fit1$lrt)
+        if (el_fit2 >  el_fit1  ){
+  
+          lr.stat[k, ] <- c(i, j, el_fit2 -  el_fit1)
         } else {
-          # B[j, i] <- 1
-          lr.stat[k, ] <- c(j, i, el_fit1$lrt -  el_fit2$lrt)
+          lr.stat[k, ] <- c(j, i, el_fit1 -  el_fit2)
         }
       
       Omega[i, j] <- Omega[j,i] <- 1
@@ -119,10 +121,9 @@ forwardBackwardFull <- function(Y, moments = 3, meanEst = 1,
   lr.stat <- cbind(which(B == 1, arr.ind = T), rep(0, sum(B)))
   
   # Fit Model
-  el_fit2 <- fitEL(Y = Y, B = B, Omega = Omega,
-                   meanEst = meanEst, type = fwdType,
-                   high_moments = moments, optim.method = "BFGS",
-                   tol = innerTol, outerTol = optimTol)
+  el_fit2 <- sempl_cd(Y = Y, B = B1, Omega = Omega,
+                      covarRestrict = covarRestrict_temp, meanEst = meanEst)
+  
   full.lrt <- el_fit2$lrt
 
   while(dim(lr.stat)[1] > 0 & stoppingCrit < bwdTol) {

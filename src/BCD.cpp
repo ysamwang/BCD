@@ -7,19 +7,19 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
 
     //initialize graph object
   lin_sem graph = lin_sem(Br, Omegar, BInitr, OmegaInitr, Yr, omegaInitScale);
-  
+
   //start Updates
   int i;
   int counter = 0;
   double convCrit = 1.0;
 
   if(sigConv){
-    
+
     arma::mat oldSigma; // hold previous sigma estimate
 
     while(convCrit > tol && counter < maxIter){
       oldSigma = graph.getSigma();
-      
+
       //update nodes
       for(i = 0; i < graph.getV(); i++)
       {
@@ -28,7 +28,7 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
           // and no parents in a directed cycle, then the node does not need to be
           // updated on subsequent passes and graph.SingleUpdateOnly(i) will be set to 1
           if(!graph.singleUpdateOnly(i)){
-            
+
             // Update node returns a 0 if the update is unsuccesful
             // ie when the conditioning number is too large
             // in this case, simply return current estimates
@@ -41,9 +41,9 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
           }
         }
       }
-      
+
       //update convergence criteria and counter
-      convCrit =  accu(abs(oldSigma - graph.getSigma())) / (accu(graph.getB()) + accu(graph.getOmega()));
+      convCrit =  accu(abs(oldSigma - graph.getSigma())) / accu(abs(oldSigma));
       counter ++;
     }
   } else {
@@ -53,8 +53,8 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
     while(convCrit > tol && counter < maxIter){
       oldB = graph.getBInit();
       oldOmega = graph.getOmegaInit();
-      
-      
+
+
       //update nodes
       for(i = 0; i < graph.getV(); i++)
       {
@@ -63,7 +63,7 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
         // and no parents in a directed cycle, then the node does not need to be
         // updated on subsequent passes and graph.SingleUpdateOnly(i) will be set to 1
         if(!graph.singleUpdateOnly(i)){
-          
+
           // Update node returns a 0 if the update is unsuccesful
           // ie when the conditioning number is too large
           // in this case, simply return current estimates
@@ -76,18 +76,17 @@ Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int
           }
         }
       }
-      
+
     convCrit =  (accu(abs(oldB - graph.getBInit())) + accu(abs(oldOmega - graph.getOmegaInit()))) / (accu(graph.getB()) + accu(graph.getOmega()));
     counter++;
-    } //end while 
-    
+    } //end while
+
   }
 
-    //while statmen terminates, return current estimates
+    //while statement terminates, return current estimates
     return Rcpp::List::create(Rcpp::Named("SigmaHat", graph.getSigma()),
                               Rcpp::Named("OmegaHat", graph.getOmegaInit()),
                               Rcpp::Named("BHat", graph.getBInit()),
                               Rcpp::Named("Iter", counter),
-                              Rcpp::Named("Converged", (convCrit < tol))
-                                );
+                              Rcpp::Named("Converged", (convCrit < tol)));
 }

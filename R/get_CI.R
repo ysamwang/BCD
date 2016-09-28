@@ -335,7 +335,7 @@ var.ricf <- function(Y, B, Omega,  B.hat, Omega.hat, type = "expected")
     
   } else if (type == "sandwich") {
     #### Sandwich Variance based on misspecified model ####
-    
+    n <- dim(Y)[2]
     V <- dim(B)[1]
     
     S <- Y %*% t(Y) / dim(Y)[2]

@@ -1,44 +1,38 @@
 #include "elSEM_naive.h"
 
-el_sem_naive::el_sem_naive(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SEXP dual_r, int meanEst)
+el_sem_naive::el_sem_naive(SEXP weights_r, SEXP y_r, SEXP b_r, SEXP omega_r, bool mean_est_r)
 {
-    mat y = as<arma::mat>(y_r);
-    n_ = y.n_cols;
-    v_ = y.n_rows;
-    counter_ = 0;
-    conv_crit_ = 1.0;
+    vec means;
+    y_ = as<arma::mat>(y_r);
+    n_ = y_.n_cols;
+    v_ = y_.n_rows;
+    mat b_weights(v_, v_, fill::zeros);
+    mat omega_weights(v_, v_, fill::zeros);
+    mean_est_ = mean_est_r;
+
 
     //find appropriate spots to put in b_weights_r and omega_weights so that we can build sigma
-    uvec b_spots = find(as<arma::mat>(b_r));
-    uvec omega_spots = arma::find(trimatl(as<arma::mat>(omega_r)));
+    b_spots_ = find(as<arma::mat>(b_r));
+    omega_spots_ = arma::find(trimatl(as<arma::mat>(omega_r)));
     vec weights = as<arma::vec>(weights_r);
 
-    mat omega_weights(v_, v_, fill::zeros);
-    mat b_weights(v_, v_, fill::zeros);
-    vec means = vec(v_, fill::zeros); //non-zero means
-
-
-
-    if(meanEst){
+    if(mean_est_) {
         means = as<arma::vec>(weights_r).head(v_);
-        b_weights.elem(b_spots) = as<arma::vec>(weights_r).subvec(v_, v_ + b_spots.n_elem - 1);
-        omega_weights.elem(omega_spots) = weights.subvec(v_ + b_spots.n_elem, v_ + b_spots.n_elem + omega_spots.n_elem - 1);
+        b_weights.elem(b_spots_) = as<arma::vec>(weights_r).subvec(v_, v_ + b_spots_.n_elem - 1);
+        omega_weights.elem(omega_spots_) = weights.subvec(v_ + b_spots_.n_elem, v_ + b_spots_.n_elem + omega_spots_.n_elem - 1);
         omega_weights = symmatl(omega_weights);
     } else {
-        b_weights.elem(b_spots) = weights.subvec(0, b_spots.n_elem - 1);
-        omega_weights.elem(omega_spots) = weights.subvec(b_spots.n_elem, b_spots.n_elem + omega_spots.n_elem - 1);
+        b_weights.elem(b_spots_) = weights.subvec(0, b_spots_.n_elem - 1);
+        omega_weights.elem(omega_spots_) = weights.subvec(b_spots_.n_elem, b_spots_.n_elem + omega_spots_.n_elem - 1);
         omega_weights = symmatl(omega_weights);
     }
 
-
-    sigma_ = solve( (eye(v_, v_) - b_weights), solve( eye(v_, v_) - b_weights, omega_weights).t());
-    dual_ = as<arma::vec>(dual_r);
-
-    //
+    // Create matrix of constraints
+    // set mean constraints
     constraints_ = mat(v_ + (v_ *(v_ + 1) )/ 2, n_);
+    constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights) * y_;
 
-    constraints_.rows(0, v_ - 1) = (eye(v_, v_) - b_weights) * y;
-    if(meanEst) {
+    if(mean_est_) {
         constraints_.rows(0, v_ - 1).each_col() -= means;
     }
 
@@ -46,66 +40,66 @@ el_sem_naive::el_sem_naive(SEXP weights_r, SEXP y_r, SEXP omega_r, SEXP b_r , SE
     k = v_;
     for(i = 0; i < v_; i++) {
         for(j = 0; j <= i; j++ ) {
-            constraints_.row(k) =  (y.row(i) % y.row(j)) - sigma_(i,j);
+            constraints_.row(k) =  (constraints_.row(i) % constraints_.row(j)) - omega_weights(i, j);
             k++;
         }
     }
-    d_ = (constraints_.t() * dual_) + 1.0;
+    //dual variables
+    dual_ = vec(constraints_.n_rows, fill::zeros);
+//    d_ = (constraints_.t() * dual_) + 1.0;
+    d_ = vec(n_, fill::ones);
+
 }
 
 double el_sem_naive::update_dual(double tol, int max_iter)
 {
 
     //pre-allocate memory for gradient, hessian and update
-    vec grad(v_ + (v_ *(v_ + 1) )/ 2 );
-    mat hessian(v_ + (v_ *(v_ + 1) )/ 2 ,v_ + (v_ *(v_ + 1) )/ 2 );
-    vec update(v_ + (v_ *(v_ + 1) )/ 2 );
+    vec grad(constraints_.n_rows );
+    vec update(constraints_.n_rows);
+    mat hessian(constraints_.n_rows , constraints_.n_rows);
     grad.zeros();
     hessian.zeros();
     update.zeros();
 
     // backtracking parameters
-    double backtracking_scaling_const = .4;
     int back_tracking_counter;
     int max_back_track = 20; // steps required to scale update by 1e-8
 
-    while(conv_crit_ > tol && counter_ < max_iter) {
 
+    // search parameters
+    double conv_crit = tol + 1.0;
+    int counter = 0;
+
+    while(conv_crit > tol) {
 
         // build in backtracking if necessary
         set_gradient_hessian(grad, hessian);
 
         // back tracking line search
-
         update = solve(hessian, grad);
 
         //back track to ensure everything is greater than 1/n
         back_tracking_counter = 0;
-        while(!backtracking(update) && back_tracking_counter < max_back_track) {
-            update *= backtracking_scaling_const;
-            back_tracking_counter++;
-        }
-        //if back tracking does not terminate because of max iterations update
-        //else terminate
-        if(back_tracking_counter < max_back_track) {
-            dual_ -= update;
-        } else {
-            return -99999;
+        while(!backtracking(update) ) {
+            update *= BACKTRACKING_SCALING_CONST;
+            if(++back_tracking_counter > max_back_track) {
+                return INFEASIBLE_RETURN;
+            }
         }
 
+        dual_ -= update;
 
-        conv_crit_ = norm(grad ,2);
-        counter_++;
+        conv_crit = norm(grad ,2);
+        if(counter++ > max_iter) {
+            return INFEASIBLE_RETURN;
+        }
     }
 
     d_ = (constraints_.t() * dual_) + 1.0;
-    if(conv_crit_ < tol) {
-        return -sum(log(n_ * d_));
-    } else {
-        return -999999999;
-    }
-
+    return -sum(log(n_ * d_));
 }
+
 
 // check that update preserves all(d_ > 1/n)
 int el_sem_naive::backtracking(vec update)
@@ -128,21 +122,135 @@ void el_sem_naive::set_gradient_hessian(vec &grad, mat &hessian)
     }
 }
 
-
 //return scaled d
 vec el_sem_naive::get_d()
 {
     return d_ * n_;
 }
 
-//return convergence criteria
-double el_sem_naive::get_conv_crit()
+
+vec el_sem_naive::getGradient()
 {
-    return conv_crit_;
+    // jacobian of the constraints wrt to the parameters
+    mat dg_dtheta, dg_dtheta_n;
+    // check if need to take derivative wrt to mean params as well
+    if(mean_est_) {
+        dg_dtheta = mat(constraints_.n_rows, v_ + b_spots_.n_elem + omega_spots_.n_elem);
+        dg_dtheta_n = mat(constraints_.n_rows, v_ + b_spots_.n_elem + omega_spots_.n_elem);
+
+        dg_dtheta.zeros();
+        // loop through each observation
+        int n, v, b, i, j, z, k, w;
+        for(n = 0; n < n_; n++) {
+            dg_dtheta_n.zeros();
+            // wrt to the mean parameters (just negative identity)
+            for(v = 0; v < v_; v++) {
+                dg_dtheta_n(v, v) = -1.0;
+            }
+
+            //loop through each free element of B
+            for(b = 0; b < b_spots_.n_elem; b++) {
+                j = b_spots_(b) / v_;
+                i = b_spots_(b) % v_;
+
+                // mean constraint
+                dg_dtheta_n(i,v_ +  b) += -y_(j, n);
+
+                // hit all covariance constraints
+                for(z = 0; z < v_; z++) {
+                    if (z <= i) {
+                        k = i * (i + 1) / 2 - (i - z) - 1;
+                    } else  {
+                        k = z* (z + 1) / 2 - (z - i) - 1;
+                    }
+
+                    if (z != i) {
+                        dg_dtheta_n(v_ + k, v_ + b) += -y_(j, n) * constraints_(z, n);
+                    } else {
+                        dg_dtheta_n(v_ + k, v_ + b) += -2 * y_(j, n) * constraints_(z, n);
+                    }
+                }
+            }
+
+            // loop through each free element of Omega
+            for(w = 0; w < omega_spots_.n_elem; w++) {
+                j = omega_spots_(w) / v_;
+                i = omega_spots_(w) % v_;
+
+                if (j <= i) {
+                    k = i * (i + 1) / 2 - (i - j) - 1;
+                } else  {
+                    k = j * (j + 1) / 2 - (j - i) - 1;
+                }
+
+                dg_dtheta_n(v_ + k, v_ + b_spots_.n_elem + w) += -1.0;
+            }
+
+            dg_dtheta += dg_dtheta_n / d_(n);
+        }
+        // end meanEst
+    } else { // no mean params
+
+        dg_dtheta = mat(constraints_.n_rows, b_spots_.n_elem + omega_spots_.n_elem);
+        dg_dtheta_n = mat(constraints_.n_rows, b_spots_.n_elem + omega_spots_.n_elem);
+
+        dg_dtheta.zeros();
+
+
+        // loop through each observation
+        int n, v, z, k, w, b, i, j;
+        for(n = 0; n < n_; n++) {
+            dg_dtheta_n.zeros();
+
+            //loop through each free element of B
+            for(b = 0; b < b_spots_.n_elem; b++) {
+                j = b_spots_(b) / v_;
+                i = b_spots_(b) % v_;
+
+                // derivative of mean constraint wrt b_{ij}
+                dg_dtheta_n(i, b) = -y_(j, n);
+
+                // hit all covariance constraints
+                for(z = 0; z < v_; z++) {
+                    if (z <= i) {
+                        k = (i+1) * (i + 2) / 2 - (i - z) - 1;
+                    } else  {
+                        k = (z + 1) * (z + 2) / 2 - (z - i) - 1;
+                    }
+
+                    if (z != i) {
+                        dg_dtheta_n(v_ + k, b) += -y_(j, n) * constraints_(z, n);
+                    } else {
+                        dg_dtheta_n(v_ + k, b) += -2 * y_(j, n) * constraints_(z, n);
+                    }
+                }
+            }
+
+            // loop through each free element of Omega
+            for(w = 0; w < omega_spots_.n_elem; w++) {
+                j = omega_spots_(w) / v_;
+                i = omega_spots_(w) % v_;
+
+
+                if (j <= i) {
+                    k = (i+1) * (i + 2) / 2 - (i - j) - 1;
+                } else  {
+                    k = (j + 1) * (j + 2) / 2 - (j - i) - 1;
+                }
+
+//                Rcout << i << " " << j  << " " << k <<std::endl;
+
+                dg_dtheta_n(v_ + k, b_spots_.n_elem + w) += -1.0;
+            }
+
+            dg_dtheta += dg_dtheta_n / d_(n);
+//            Rcout << dg_dtheta_n <<std::endl;
+        }
+        // end meanEst
+    }
+
+    mat logEL_grad_wrt_b = -(dual_.t() * dg_dtheta) ;
+
+    return logEL_grad_wrt_b.row(0).t();
 }
 
-//return iterations used
-int el_sem_naive::get_iter()
-{
-    return counter_;
-}

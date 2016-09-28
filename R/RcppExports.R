@@ -5,35 +5,27 @@ bcdC <- function(Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, t
     .Call('BCD_bcdC', PACKAGE = 'BCD', Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, tol, omegaInitScale)
 }
 
-sem_el_fit_obj <- function(b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, tol, max_iter, meanEst) {
-    .Call('BCD_sem_el_fit_obj', PACKAGE = 'BCD', b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, tol, max_iter, meanEst)
+sempl_input <- function(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter) {
+    .Call('BCD_sempl_input', PACKAGE = 'BCD', b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter)
 }
 
-sem_el_fit_weights <- function(b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, tol, max_iter, meanEst) {
-    .Call('BCD_sem_el_fit_weights', PACKAGE = 'BCD', b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, tol, max_iter, meanEst)
+sempl_input_weights <- function(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter) {
+    .Call('BCD_sempl_input_weights', PACKAGE = 'BCD', b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter)
 }
 
-sem_el_naive_fit_obj <- function(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst) {
-    .Call('BCD_sem_el_naive_fit_obj', PACKAGE = 'BCD', weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst)
+sempl_input_naive <- function(weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter) {
+    .Call('BCD_sempl_input_naive', PACKAGE = 'BCD', weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter)
 }
 
-sem_el_naive_fit_weights <- function(weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst) {
-    .Call('BCD_sem_el_naive_fit_weights', PACKAGE = 'BCD', weights_r, y_r, omega_r, b_r, dual_r, tol, max_iter, meanEst)
+sempl_input_naive_weights <- function(weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter) {
+    .Call('BCD_sempl_input_naive_weights', PACKAGE = 'BCD', weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter)
 }
 
-sem_el_fit_obj_one_fixed <- function(b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, tol, max_iter, meanEst, b_fixed, row_ind, col_ind) {
-    .Call('BCD_sem_el_fit_obj_one_fixed', PACKAGE = 'BCD', b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, tol, max_iter, meanEst, b_fixed, row_ind, col_ind)
+sempl_input_grad <- function(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter) {
+    .Call('BCD_sempl_input_grad', PACKAGE = 'BCD', b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter)
 }
 
-sem_el_euclid_fit_obj <- function(b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, meanEst) {
-    .Call('BCD_sem_el_euclid_fit_obj', PACKAGE = 'BCD', b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, meanEst)
-}
-
-sem_el_euclid_fit_weights <- function(b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, meanEst) {
-    .Call('BCD_sem_el_euclid_fit_weights', PACKAGE = 'BCD', b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, meanEst)
-}
-
-sem_el_fit_obj_l1 <- function(b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, tol, max_iter, meanEst, penalty) {
-    .Call('BCD_sem_el_fit_obj_l1', PACKAGE = 'BCD', b_weights_r, y_r, b_r, moment_2_restrictions_r, moment_3_restrictions_r, moment_4_restrictions_r, tol, max_iter, meanEst, penalty)
+sempl_input_reg <- function(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter) {
+    .Call('BCD_sempl_input_reg', PACKAGE = 'BCD', b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter)
 }
 
