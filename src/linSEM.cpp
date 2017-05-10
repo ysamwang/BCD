@@ -19,13 +19,12 @@ lin_sem::lin_sem(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, do
 
     //if BInit is null, use initialization routine
     // else use given initialization
-    if(Rf_isNull(BInitr))
-    {
-      initEst(OmegaInitScale);
+    if(Rf_isNull(BInitr)) {
+        initEst(OmegaInitScale);
     } else {
-      // clone since these will be updated
-      BInit = as<arma::mat>(clone(BInitr));
-      OmegaInit =  as<arma::mat>(clone(OmegaInitr));
+        // clone since these will be updated
+        BInit = as<arma::mat>(clone(BInitr));
+        OmegaInit =  as<arma::mat>(clone(OmegaInitr));
     }
     //initialize singleUpdates to all 0's
     singleUpdates.zeros(V);
@@ -44,7 +43,7 @@ void lin_sem::initEst(double OmegaInitScale)
     mat resid; //matrix of residuals from regressions
     resid.copy_size(Y); //same size as Y
 
-        for(i = 0; i < V; i++) {
+    for(i = 0; i < V; i++) {
         // Set B through OLS
         uvec pa_i = find(B.row(i));
         if( pa_i.n_rows > 0) {
@@ -55,8 +54,8 @@ void lin_sem::initEst(double OmegaInitScale)
             //Estimate residual from OLS and use as initial estimates
             resid.row(i) = (Y.row(i) - coef.t() * Y.rows(pa_i));
         } else {
-            //if there are no parents, just get deviations from mean
-            resid.row(i) = Y.row(i) - mean(Y.row(i));
+            //if there are no parents
+            resid.row(i) = Y.row(i);
         }
     }
 
@@ -67,34 +66,35 @@ void lin_sem::initEst(double OmegaInitScale)
 
     //Check if OmegaInit is PD
     if(!all(eigval > 0)) {
-      //if not, scale down rows so that it is diagonally dominant to ensure PD
-      rowvec row_i;
-      double row_sum;
-      int j;
+        //if not, scale down rows so that it is diagonally dominant to ensure PD
+        rowvec row_i;
+        double row_sum;
+        int j;
 
-      for(i = 0; i < V; i++){
-        //get sum of row i without element i
-        row_i = OmegaInit.row(i);
-        row_i.shed_col(i);
-        row_sum = sum(abs(row_i));
+        for(i = 0; i < V; i++) {
+            //get sum of row i without element i
+            row_i = OmegaInit.row(i);
+            row_i.shed_col(i);
+            row_sum = sum(abs(row_i));
 
-        //check for diagonal dominance in row i
-        if(row_sum > OmegaInit(i,i))
-        {
-          //scale down each element so that the sum of the off-diagonals is equal to (omega_ii * OmegaInitScale)
-          for(j = 0; j < V; j++)
-          {
-            if(j != i){
-              OmegaInit(i, j) = OmegaInit(i, j) * OmegaInit(i,i) * OmegaInitScale / row_sum;
-              OmegaInit(j, i) = OmegaInit(i, j);
+            //check for diagonal dominance in row i
+            if(row_sum > OmegaInit(i,i)) {
+                //scale down each element so that the sum of the off-diagonals is equal to (omega_ii * OmegaInitScale)
+                for(j = 0; j < V; j++) {
+                    if(j != i) {
+                        OmegaInit(i, j) = OmegaInit(i, j) * OmegaInit(i,i) * OmegaInitScale / row_sum;
+                        OmegaInit(j, i) = OmegaInit(i, j);
+                    }
+                }
             }
-          }
         }
-      }
     }
 }
 
 
+// Main function for lin_sem object
+// Updates relevant parameters for node i
+// takes node i and max condition number
 // Main function for lin_sem object
 // Updates relevant parameters for node i
 // takes node i and max condition number
@@ -116,167 +116,129 @@ int lin_sem::updateNode(int i, double maxKappa)
 
     arma::mat X;
     arma::mat Z;
-    arma::vec solved;
+    arma::vec aHat, solved;
     arma::rowvec resid;
     arma::uvec sib2;
+    double w_ii_two_norm;
     int k;
-    double det1, det2, aNaught;
 
+    // Check conditioning number
     double condNumber = cond(omegaSubset(i));
-    if(condNumber > maxKappa){
-      Rcout <<"Condition Number too large: " << condNumber <<endl;
-      return 0;
+    if(condNumber > maxKappa) {
+        Rcout <<"Condition Number too large: " << condNumber <<endl;
+        return 0;
     }
 
 
-    //calculate a_0 and a_pa
-    arma::vec a_pa(pa_i.n_elem, fill::zeros);
 
+
+    //calculate c_0 and c_pa
+    arma::vec c_pa(pa_i.n_elem, fill::zeros);
+
+    arma::mat subMat_cPa;
     for(k = 0; k < pa_i.n_elem; k ++) {
-        //potential speed up by identifying strongly connected components
-        BInit(i, pa_i(k)) = 2.0;
-        det2 = det(eye(V,V) - BInit);
-        BInit(i, pa_i(k)) = 1.0;
-        det1 = det(eye(V,V) - BInit);
-        a_pa(k) = det2 - det1;
+        subMat_cPa = eyeBSubset(i);
+        subMat_cPa.shed_col( pa_i(k));
+        c_pa(k) = det(subMat_cPa) * pow( -1.0, i + pa_i(k) + 1);
     }
 
     BInit.row(i) = vec(V, fill::zeros).t();
-    arma::mat subMat_aNaught = eye(V, V) - BInit;
-    subMat_aNaught.shed_row(i);
-    subMat_aNaught.shed_col(i);
-    aNaught = det(subMat_aNaught);
+    arma::mat subMat_cNaught = eyeBSubset(i);
+    subMat_cNaught.shed_col(i);
 
-    //Acyclic case or case where no parents are involved in cycles
-    if(norm(a_pa, 2) == 0) {
+    double cNaught = det(subMat_cNaught);
 
-       // There are some siblings
-      if(s > 0 ){
+    // Form X_i matrix
+    if(s > 0 ) {
 
         //get psuedo variables
         arma::uvec sib2 = sib_i;
         sib2.elem(find(sib2 > i)) = sib2.elem(find(sib2 > i)) - 1;
 
-        arma::mat Z = solve(omegaSubset(i), eyeBSubset(i)) * Y;
+        arma::mat Z = solve(omegaSubset(i), eyeBSubset(i) * Y);
         if( p > 0 ) {
-        // combine into a single matrix
-          X = join_vert(Z.rows(sib2), Y.rows(pa_i));
-          solved = solve(X.t(), Y.row(i).t());
+            // parents and siblings
+            // combine into a single matrix
+            X = join_vert(Z.rows(sib2), Y.rows(pa_i));
+        } else {
+            //siblings no parents
+            X = Z.rows(sib2);
+        }
+    } else {
+        // no siblings but parents
+        if(p > 0) {
+            X = Y.rows(pa_i);
+        } else {
+            resid = Y.row(i);
+        }
+    }
 
-          //update Binit since there are parents
-          BInit(i_vec, pa_i) = solved.rows(s, s + p - 1).t();
+
+
+
+
+    //Solve for minimizer of all parameters
+    if(s + p > 0) {
+        aHat = solve(X.t(), Y.row(i).t());
+        resid = Y.row(i) - aHat.t() * X;
+
+
+        if(norm(c_pa) == 0) {
+            solved = aHat;
+
+            // if there are no directed cycles (which we assume is true if norm(a_pa) == 0)
+            // and no siblings, then you only need one update
+            if(s == 0) {
+//                singleUpdates(i) = 1;
+            }
         } else {
 
-          X = Z.rows(sib2);
-          solved = solve(X.t(), Y.row(i).t());
+            vec augmented_cPa = join_cols(vec(s, fill::zeros), c_pa);
+
+            vec back_half = pow(norm(resid), 2) / (cNaught + dot(augmented_cPa, aHat)) * solve(X * X.t(), augmented_cPa);
+            solved = aHat + back_half;
         }
 
-        //update OmegaInit since there are siblings
-        OmegaInit(i_vec, sib_i) = solved.rows(0, s - 1).t();
-        OmegaInit(sib_i, i_vec) = solved.rows(0, s - 1);
-
-        resid = Y.row(i) - solved.t() * X;
-
-
-      } else { //no siblings
-
-        //since there are no siblings and a_pa = 0, then this only needs to be updated once
-        singleUpdates(i) = 1;
-
-        if( p > 0 ) {
-          X = Y.rows(pa_i);
-          solved = solve(X.t(), Y.row(i).t());
-          BInit(i_vec, pa_i) = solved.rows(0, p - 1).t();
-          resid = Y.row(i) - solved.t() * X;
-        } else {
-        // Assume mean 0, but not necessarily centered data
-          resid = Y.row(i);
-        }
-      }
-
-      arma::vec omegaVec = OmegaInit.col(i);
-      omegaVec.shed_row(i);
-
-
-
-      OmegaInit(i, i) = 1.0 / Y.n_cols * pow (norm(resid), 2) +
-        dot(omegaVec.t() , solve(omegaSubset(i),  omegaVec));
+        w_ii_two_norm = pow(norm(Y.row(i) - solved.t() * X),2);
 
     } else {
-        // Full BCD
-        //get Qp
-        arma::mat Qp;
-
-        //normalize a_pa and aNaught
-        aNaught = aNaught / norm(a_pa, 2);
-        a_pa = a_pa / norm(a_pa, 2);
-
-
-        if(a_pa.n_elem > 1) {
-            Qp =  join_vert(null(a_pa.t()).t(), a_pa.t());
-        } else {
-          Qp << a_pa(0) <<endr;
-        }
-
-
-        if(s > 0){
-          //get psuedo variables
-          sib2 = sib_i;
-          sib2.elem(find(sib2 > i)) = sib2.elem(find(sib2 > i)) - 1;
-          Z = solve(omegaSubset(i), eyeBSubset(i)) * Y;
-          X = join_vert(Z.rows(sib2), Qp * Y.rows(pa_i));
-
-        } else {
-          X =  Qp * Y.rows(pa_i);
-        }
-
-
-        // QR decomposition of X^t
-        arma::mat Q, R;
-
-        qr(Q, R, X.t());
-
-                // Compute y_0^2 for gamma^\star
-        double yNaught2 = 0;
-        for(k = s + p; k < Y.n_cols; k++) {
-            yNaught2 += pow(dot(Y.row(i), Q.col(k)), 2);
-        }
-        double yQ_sp = dot(Y.row(i), Q.col(s + p - 1));
-        double r = R(s + p - 1, s + p - 1);
-
-        arma::rowvec gammaStar(s + p);
-
-        if(s + p > 1){
-          gammaStar.cols(0, s + p - 2) = Y.row(i) * Q.cols(0, s + p - 2);
-        }
-        gammaStar(s + p - 1) = (pow(yQ_sp, 2) + yNaught2 + r * aNaught * yQ_sp) / (r * aNaught + yQ_sp );
-
-        arma::rowvec solved = solve(R.rows(0, s + p - 1), gammaStar.t()).t();
-        BInit(i_vec, pa_i) = solved.cols(s, s + p - 1) * Qp;
-
-
-        if( s > 0 ){
-          OmegaInit(i_vec, sib_i) = solved.cols(0, s - 1);
-          OmegaInit(sib_i, i_vec) = solved.cols(0, s - 1).t();
-          resid = Y.row(i) - BInit(i_vec, pa_i) * Y.rows(pa_i) - OmegaInit(i_vec, sib_i) * Z.rows(sib2);
-        } else {
-          resid = Y.row(i) - BInit(i_vec, pa_i) * Y.rows(pa_i);
-        }
-
-        arma::vec omegaVec = OmegaInit.col(i);
-        omegaVec.shed_row(i);
-        OmegaInit(i, i) = 1.0 / Y.n_cols * pow(norm(resid,2), 2) + dot(omegaVec.t() , solve(omegaSubset(i),  omegaVec));
+        w_ii_two_norm = pow(norm(Y.row(i)),2);
     }
+
+
+
+
+    //Update the parameters
+    if(p > 0) {
+        BInit(i_vec, pa_i) = solved.rows(s, s + p - 1).t();
+    }
+
+    if(s > 0) {
+        OmegaInit(i_vec, sib_i) = solved.rows(0, s - 1).t();
+        OmegaInit(sib_i, i_vec) = solved.rows(0, s - 1);
+    }
+
+    // Update variance term
+    arma::vec omegaVec = OmegaInit.col(i);
+    omegaVec.shed_row(i);
+
+
+        OmegaInit(i, i) = w_ii_two_norm / Y.n_cols +
+                          dot(omegaVec.t() , solve(omegaSubset(i),  omegaVec));
+
+
+
 
     // succesfully updated. If condition number of Omega[-i,-i] is too large, then it returns 0 and does not update
     return 1;
 }
 
 
+
 mat lin_sem::omegaSubset(int i)
 {
     arma::mat ret;
-    ret = OmegaInit;
+    ret = OmegaInit + 0.0;
     ret.shed_row(i);
     ret.shed_col(i);
     return ret;
@@ -313,13 +275,15 @@ int lin_sem::getV()
 
 int lin_sem::singleUpdateOnly(int i)
 {
-  return (int) singleUpdates[i];
+    return (int) singleUpdates[i];
 }
 
-mat lin_sem::getB(){
-  return B;
+mat lin_sem::getB()
+{
+    return B;
 }
 
-mat lin_sem::getOmega(){
-  return Omega;
+mat lin_sem::getOmega()
+{
+    return Omega;
 }

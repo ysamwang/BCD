@@ -93,6 +93,7 @@ ricfR <- function(L = NULL, O, X, Linit = NULL, Oinit = NULL, sigconv=TRUE, tol=
 	Det <- function(Lcur) {
 		return(det(diag(nrow(Lcur)) - Lcur))
 	}
+	
 	norm_vec <- function (x) sqrt(sum(x^2))
 	Qp <- function(a) {
 		p <- length(a)
@@ -139,6 +140,7 @@ ricfR <- function(L = NULL, O, X, Linit = NULL, Oinit = NULL, sigconv=TRUE, tol=
 					ind.pos <- which(a != 0)
 					pa.pos <- pa[ind.pos]
 					if (length(ind.pos) > 0) {
+						
 						## Build matrix Q and run the algorithm
 						ind0 <- which(a == 0)
 						pa0 <- pa[ind0]
@@ -196,7 +198,13 @@ ricfR <- function(L = NULL, O, X, Linit = NULL, Oinit = NULL, sigconv=TRUE, tol=
 			if (kappa(Ocur[-i, -i]) > maxkap) {
 				stop(paste("The Condition number of Ocur[-i, -i] is too large for node", i))
 			}
-			Ocur[i,i] <- (RSS/n) + Ocur[i, -i] %*% solve(Ocur[-i, -i]) %*% Ocur[-i, i]		
+			
+			### print ###
+			
+			
+			
+			Ocur[i,i] <- (RSS/n) + Ocur[i, -i] %*% solve(Ocur[-i, -i]) %*% Ocur[-i, i]
+			
 		}	
 		sigcur <- t(solve(diag(p) - Lcur)) %*% Ocur %*% solve(diag(p) - Lcur)
 		bhat <- diag(p)-t(Lcur)
@@ -226,6 +234,7 @@ ricfR <- function(L = NULL, O, X, Linit = NULL, Oinit = NULL, sigconv=TRUE, tol=
 				dLO6 <- format(round(dLO, 6), nsmall = 6)
 				cat(iter, " Avg Change in L & O: ", dLO6, "| Avg Change in Sigma: ", dsig6, "\n")
 			}
+
 			if ((sigconv && dsig < tol) || (!sigconv && dLO < tol) || iter >= maxiter) {
 				if (out == "true" || out == "all" || out == "final") {
 					cat("Sigmahat \n")
@@ -247,6 +256,9 @@ ricfR <- function(L = NULL, O, X, Linit = NULL, Oinit = NULL, sigconv=TRUE, tol=
 	}
 	return(list(Sigmahat = sigcur, Bhat = bhat, Omegahat = Ocur, Lambdahat = Lcur, iterations = iter, converged = (iter < maxiter)))
 }
+
+
+
 
 # Optional method for calling ricf, using a mag object instead of L and O.
 # Note: undirected edges not allowed here.

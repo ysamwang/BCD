@@ -106,7 +106,7 @@ mixedMethod <- function(B, Omega, Y, ricfIter = 10, ricfTol = 1e-6){
 
 
 ##### Simulation #####
-do.one <- function(p, n, k, d, b, times = 5, tol = .5){
+do.one <- function(p, n, k, d, b, times = 1, tol = 1e-2){
 
   
   #### Generate Model ####
@@ -177,7 +177,7 @@ do.one <- function(p, n, k, d, b, times = 5, tol = .5){
   #### Run RICF ####
   time.ricf <- try(microbenchmark::microbenchmark(out.ricf <- ricf(B = B, Omega = Omega, Y = Y, BInit = NULL,
                                                                    OmegaInit = NULL, sigConv = 0, maxIter = 5000,
-                                                                   msgs = FALSE, omegaInitScale = .9)
+                                                                   msgs = FALSE, omegaInitScale = .9, tol = 1e-6)
                                                   , times = times), silent = T)
   if(class(time.ricf)[1] == "try-error")
   {
@@ -194,34 +194,18 @@ do.one <- function(p, n, k, d, b, times = 5, tol = .5){
     out.sem <- list(convergence = 0)
   }
   
-  
-   #### Run Mixed ####
-  time.mixed <- try(microbenchmark::microbenchmark(out.mixed <- mixedMethod(B, Omega, Y), times = times), silent = T)
-  
-  if(class(time.mixed)[1] == "try-error")
-  {
-    time.mixed <- list(time = 0)
-    out.mixed <- list(convergence = 0)
-  } else if(any(eigen(out.mixed$C)$values < 0 )){
-    time.mixed <- list(time = 0)
-    out.mixed <- list(convergence = 0)
-  }
-  
   #### Post Processing
   
   if(out.ricf$Converged & out.sem$convergence){
-    err <- (sum(abs(out.ricf$BHat - out.sem$A)) + sum(abs(out.ricf$OmegaHat - out.sem$P ))) / sum(B + Omega)    
+    err <- sum(abs(out.ricf$BHat - out.sem$A)) + sum(abs(out.ricf$OmegaHat - out.sem$P ))
     agree <- err < tol
   } else {
     err <- -1
     agree <- 0
   }
-  if(is.na(agree))
-  {}
 
   ret <- list(ricfTime = mean(time.ricf$time), ricfConv = out.ricf$Converged,
                 semTime = mean(time.sem$time), semConv = out.sem$convergence,
-                mixedTime = mean(time.mixed$time), mixedConv = out.mixed$convergence,
                 agree = agree, B = B, Omega = Omega, B.true = B.true, Omega.true = Omega.true, Y = Y)
   
   return(ret)

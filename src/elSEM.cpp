@@ -10,13 +10,12 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r, SEXP covar
     conv_crit_ = 1.0; //convergence critiera for inner maximization (norm of gradient)
     mean_est_ = mean_est_r;
 
-//    Rcpp::Rcout << "Point 1" << std::endl;
+
     //find appropriate spots to put in b_weights_r
     b_spots_ = find(as<arma::mat>(b_r)); //non-structural zeros in B
     vec means = vec(v_, fill::zeros); //non-zero means
     mat b_weights = mat(v_, v_, fill::zeros); // matrix with edge weights
     restrict_ = as<arma::mat>(covar_restrict); // matrix holding restrictions
-//    Rcpp::Rcout << "Point 2" << std::endl;
 
     if(mean_est_) {
         means = as<arma::vec>(b_weights_r).head(v_);
@@ -28,7 +27,7 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r, SEXP covar
             b_weights.elem(b_spots_) = as<arma::vec>(b_weights_r);
         }
     }
-//        Rcpp::Rcout << "Point 3" << std::endl;
+    
     // Filling in the constraint matrix
     constraints_ = mat(v_ + restrict_.n_rows, n_, fill::ones);
     // Mean restrictions
@@ -37,9 +36,8 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r, SEXP covar
     if(mean_est_) {
         constraints_.rows(0, v_ - 1).each_col() -= means;
     }
-//    Rcpp::Rcout << "Point 4" << std::endl;
 
-    // additional "uncorrelated" constraints
+        // additional "uncorrelated" constraints
     // This could include covariance and arbitrary higher order constraints
     int k, z;
     for(k = 0; k < restrict_.n_rows; k++) {
@@ -51,7 +49,6 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r, SEXP covar
             }
         }
     }
-//        Rcpp::Rcout << "Point 5" << std::endl;
 
 
     dual_ = vec(constraints_.n_rows, fill::zeros);
@@ -63,7 +60,6 @@ el_sem::el_sem(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r, SEXP covar
 
 double el_sem::update_dual(double tol, int max_iter)
 {
-//            Rcpp::Rcout << "Point 6" << std::endl;
 
     vec grad(constraints_.n_rows, fill::zeros);
     vec update(constraints_.n_rows, fill::zeros);
@@ -77,18 +73,26 @@ double el_sem::update_dual(double tol, int max_iter)
     while(conv_crit_ > tol) {
 
         // build in backtracking if necessary
+        
         set_gradient_hessian(grad, hessian);
-
-        update = solve(hessian, grad);
-
+        
+        
+        // if cond number of hessian is too bad, peturb is slightly
+        if(cond(hessian) < 1e8){
+          update = solve(hessian, grad);
+        } else {
+          update = grad;
+        }
+        
         back_tracking_counter = 0;
         while(!backtracking(update) && back_tracking_counter < max_back_track) {
             update *= BACKTRACKING_SCALING_CONST;
             if(++back_tracking_counter > max_back_track) {
+              // if back tracking does not return because of max back tracking iterations
                 return INFEASIBLE_RETURN;
             }
         }
-        // if back tracking does not return because of max back tracking iterations
+        // else
         // update the dual
         dual_ -= update;
 
@@ -104,7 +108,6 @@ double el_sem::update_dual(double tol, int max_iter)
     }
 
     d_ = (constraints_.t() * dual_) + 1.0;
-//            Rcpp::Rcout << "Point 7" << std::endl;
 
     return -sum(log(n_ * d_));
 }
@@ -120,7 +123,8 @@ int el_sem::backtracking(vec update)
 // set gradient and hessian (wrt to dual variables) to appropriate values
 void el_sem::set_gradient_hessian(vec &grad, mat &hessian)
 {
-
+    //debug
+    
     d_ = (constraints_.t() * dual_) + 1.0;
     grad = -sum( constraints_ * diagmat( 1.0 / d_), 1);
 
@@ -230,12 +234,8 @@ vec el_sem::getGradient()
         }
     }
 
-//            Rcpp::Rcout << "Point 9" << std::endl;
 
-//    Rcpp::Rcout << dg_dtheta <<std::endl;
-//    Rcpp::Rcout << dual_ <<std::endl;
     mat logEL_grad_wrt_b = -(dual_.t() * dg_dtheta) ;
-//    Rcpp::Rcout << "Point 9.5" << std::endl;
 
     return logEL_grad_wrt_b.row(0).t();
 }

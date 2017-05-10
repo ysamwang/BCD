@@ -11,10 +11,14 @@ NumericVector sempl_input(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r,
         set_stream_err2(nullstream);
     }
     //initialize graph object
+    
+    //debug
     el_sem graph = el_sem(b_weights_r, y_r, b_r, mean_est_r, covar_restrict);
 
     NumericVector ret = NumericVector::create(-graph.update_dual(tol, max_iter));
+    
     ret.attr("gradient") = -graph.getGradient();
+    
     return ret;
 }
 

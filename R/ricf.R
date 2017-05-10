@@ -4,7 +4,7 @@
 #' Estimates MLE's for cyclic linear SEM's as described in DFW
 #' 
 #'  
-#' @param B V by V matrix with {0,1} giving structure of directed edges
+#' @param B V by V matrix with {0,1} giving structure of directed edges. B[i, j] = 1 indicates the edge j -> i.
 #' @param Omega V by V matrix with {0,1} giving structure of bi-directed edges
 #' @param BInit V by V matrix giving initial edges weights for directed edges. If BInit is NULL,
 #'    a default initialization will be used. 
@@ -25,7 +25,7 @@
 #'    a pass through all nodes}
 #'    \item{converged}{boolean on whether or not the algorithm converged before the max iterations}
 ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
-                 tol=10e-6, maxIter=5000, msgs = TRUE, omegaInitScale = .9, maxKap = 1e13) {
+                 tol=1e-7, maxIter=5000, msgs = TRUE, omegaInitScale = .9, maxKap = 1e13) {
   
   if (!is.matrix(Omega) || !is.matrix(Y) || !is.matrix(B))
     stop("Omega B, and X must be matrices!")

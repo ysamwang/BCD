@@ -17,7 +17,7 @@
 #' @param type profile, naive, euclid
 #' @param covarRestrict
 #' @export
-sempl <- function(Y, B, Omega, B.hat = NULL, Omega.hat = NULL, mu.hat = NULL, meanEst = T,
+sempl_db <- function(Y, B, Omega, B.hat = NULL, Omega.hat = NULL, mu.hat = NULL, meanEst = T,
                   covarRestrict = NULL, type = "profile", tol = 1e-4, maxIter = 500,
                   outerIters = 200){
   
@@ -52,42 +52,59 @@ sempl <- function(Y, B, Omega, B.hat = NULL, Omega.hat = NULL, mu.hat = NULL, me
     } else { ## If fitting non-empty model
     
       ## Using RICF initialization if necessary
-      if(is.null(B.hat)) {
+      if(is.null(B.hat) ) {
         out_ricf_init <- ricf(B = B, Omega = Omega, Y = Y - rowMeans(Y), BInit = NULL,
-                              OmegaInit = NULL, sigConv = 0, maxIter = 0,
+                              OmegaInit = NULL, sigConv = 0, maxIter = 1,
                               msgs = FALSE, omegaInitScale = .9)
-          B.hat <- initB <- out_ricf_init$BHat
+          B.hat <- out_ricf_init$BHat
           
+          ## Debug ##
+          cat("init B")
       }
       
       ## Set mu.hat if necessary
       if((is.null(mu.hat) & meanEst)){
         mu.hat <- solve(diag(rep(1,V)) - B.hat, rowMeans(Y))
-        
+        ## Debug ##
+        cat("init mu")
       }
       
+      cat(" pre nlm ")
       
       ## If mu.hat is not needed, it should still be null
       init_val <- c(mu.hat, B.hat[which(B == 1)])
+      
+      cat(" B is- ")
+      print(init_val)
       ## debug ##
+      # out <- sempl_input(pinit_val, y_r = Y, b_r = B,
+      #            mean_est_r = meanEst, covar_restrict = covarRestrict,
+      #            tol = tol, max_iter = maxIter)
+      
       out <- nlm(f = sempl_input, p = init_val, y_r = Y, b_r = B,
                  mean_est_r = meanEst, covar_restrict = covarRestrict,
                  tol = tol, max_iter = maxIter, check.analyticals = F,
-                 iterlim = outerIters)
-      mod <- sempl_input_weights(out$estimate, Y, B, meanEst, covarRestrict,
-                                 tol, maxIter)
+                 iterlim = 1)
+      ## Debug ##
+      cat("nlm")
       
+      cat(" pre-weights ")
+      
+      mod <- sempl_input_weights(init_val, Y, B, meanEst, covarRestrict,
+                                 tol, maxIter)
+      ## Debug ##
+      cat("weights")
       p <- c(1/mod$d)
       ## Get fitted values
       if(meanEst){
         mu.hat <- out$estimate[1:V]
         B.hat <- matrix(0, nrow = V, ncol = V)
-        B.hat[which(B==1)] <- out$estimate[-c(1:V)]
+        B.hat[which(B==1)] <- init_val[-c(1:V)]
         temp <- (diag(rep(1,V)) - B.hat) %*% Y
         Omega.hat <- temp %*% diag(p) %*% t(temp)
       } else {
         B.hat <- matrix(0, nrow = V, ncol = V)
-        B.hat[which(B==1)] <- out$estimate
+        B.hat[which(B==1)] <- init_val
         temp <- (diag(rep(1,V)) - B.hat) %*% Y
         Omega.hat <- (temp %*% diag(p) %*% t(temp)) * Omega
       }
@@ -97,9 +114,8 @@ sempl <- function(Y, B, Omega, B.hat = NULL, Omega.hat = NULL, mu.hat = NULL, me
                   Omega.hat = Omega.hat,
                   p = p,
                   lr =  mod$lr - n * log(n),
-                  converged = out$code,
-                  iter = out$iter,
-                  initB = initB))
+                  converged = 1,
+                  iter = -1))
     }
     
     
