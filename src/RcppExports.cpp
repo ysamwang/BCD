@@ -128,3 +128,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+
+static const R_CallMethodDef CallEntries[] = {
+    {"BCD_bcdC", (DL_FUNC) &BCD_bcdC, 10},
+    {"BCD_sempl_input", (DL_FUNC) &BCD_sempl_input, 7},
+    {"BCD_sempl_input_weights", (DL_FUNC) &BCD_sempl_input_weights, 7},
+    {"BCD_sempl_input_naive", (DL_FUNC) &BCD_sempl_input_naive, 7},
+    {"BCD_sempl_input_naive_weights", (DL_FUNC) &BCD_sempl_input_naive_weights, 7},
+    {"BCD_sempl_input_grad", (DL_FUNC) &BCD_sempl_input_grad, 7},
+    {"BCD_sempl_input_reg", (DL_FUNC) &BCD_sempl_input_reg, 7},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_BCD(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}
