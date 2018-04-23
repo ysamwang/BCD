@@ -43,3 +43,18 @@ convergence in Sigma while \code{FALSE} looks for convergence in the actual edge
 \description{
 Estimates MLE's for cyclic linear SEM's as described in DFW
 }
+\examples{
+## Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+## Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+## Center Data Y
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0 
+ricf(B, Omega, Y)
+}

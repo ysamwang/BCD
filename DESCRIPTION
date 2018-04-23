@@ -2,7 +2,7 @@ Package: BCD
 Type: Package
 Title: Linear Structural Equations with Gaussian Errors
 Version: 0.0.99
-Date: 2015-08-18
+Date: 2018-04-22
 Authors: c(person("Christopher", "Fox", role = "aut", comment = "original
     R functions"), person("Y. Samuel", "Wang", role = "aut", comment = "Rcpp
     implementation", email = "ysamwang@uw.edu"), person("Mathias", "Drton", role =
