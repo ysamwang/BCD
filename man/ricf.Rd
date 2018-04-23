@@ -9,7 +9,7 @@ ricf(B, Omega, Y, BInit = NULL, OmegaInit = NULL, sigConv = TRUE,
   maxKap = 1e+13)
 }
 \arguments{
-\item{B}{V by V matrix with {0,1} giving structure of directed edges}
+\item{B}{V by V matrix with {0,1} giving structure of directed edges. B[i, j] = 1 indicates the edge j -> i.}
 
 \item{Omega}{V by V matrix with {0,1} giving structure of bi-directed edges}
 
@@ -43,4 +43,3 @@ convergence in Sigma while \code{FALSE} looks for convergence in the actual edge
 \description{
 Estimates MLE's for cyclic linear SEM's as described in DFW
 }
-

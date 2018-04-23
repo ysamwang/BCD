@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // bcdC
 Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int maxIter, int sigConv, double maxKap, double tol, double omegaInitScale);
-RcppExport SEXP BCD_bcdC(SEXP BrSEXP, SEXP OmegarSEXP, SEXP BInitrSEXP, SEXP OmegaInitrSEXP, SEXP YrSEXP, SEXP maxIterSEXP, SEXP sigConvSEXP, SEXP maxKapSEXP, SEXP tolSEXP, SEXP omegaInitScaleSEXP) {
+RcppExport SEXP _BCD_bcdC(SEXP BrSEXP, SEXP OmegarSEXP, SEXP BInitrSEXP, SEXP OmegaInitrSEXP, SEXP YrSEXP, SEXP maxIterSEXP, SEXP sigConvSEXP, SEXP maxKapSEXP, SEXP tolSEXP, SEXP omegaInitScaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,117 +26,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sempl_input
-NumericVector sempl_input(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r, SEXP covar_restrict, double tol, int max_iter);
-RcppExport SEXP BCD_sempl_input(SEXP b_weights_rSEXP, SEXP y_rSEXP, SEXP b_rSEXP, SEXP mean_est_rSEXP, SEXP covar_restrictSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type b_weights_r(b_weights_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
-    Rcpp::traits::input_parameter< bool >::type mean_est_r(mean_est_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type covar_restrict(covar_restrictSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
-    rcpp_result_gen = Rcpp::wrap(sempl_input(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sempl_input_weights
-Rcpp::List sempl_input_weights(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r, SEXP covar_restrict, double tol, int max_iter);
-RcppExport SEXP BCD_sempl_input_weights(SEXP b_weights_rSEXP, SEXP y_rSEXP, SEXP b_rSEXP, SEXP mean_est_rSEXP, SEXP covar_restrictSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type b_weights_r(b_weights_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
-    Rcpp::traits::input_parameter< bool >::type mean_est_r(mean_est_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type covar_restrict(covar_restrictSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
-    rcpp_result_gen = Rcpp::wrap(sempl_input_weights(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sempl_input_naive
-NumericVector sempl_input_naive(SEXP weights_r, SEXP y_r, SEXP b_r, SEXP omega_r, bool mean_est_r, double tol, int max_iter);
-RcppExport SEXP BCD_sempl_input_naive(SEXP weights_rSEXP, SEXP y_rSEXP, SEXP b_rSEXP, SEXP omega_rSEXP, SEXP mean_est_rSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type weights_r(weights_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type omega_r(omega_rSEXP);
-    Rcpp::traits::input_parameter< bool >::type mean_est_r(mean_est_rSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
-    rcpp_result_gen = Rcpp::wrap(sempl_input_naive(weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sempl_input_naive_weights
-Rcpp::List sempl_input_naive_weights(SEXP weights_r, SEXP y_r, SEXP b_r, SEXP omega_r, bool mean_est_r, double tol, int max_iter);
-RcppExport SEXP BCD_sempl_input_naive_weights(SEXP weights_rSEXP, SEXP y_rSEXP, SEXP b_rSEXP, SEXP omega_rSEXP, SEXP mean_est_rSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type weights_r(weights_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type omega_r(omega_rSEXP);
-    Rcpp::traits::input_parameter< bool >::type mean_est_r(mean_est_rSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
-    rcpp_result_gen = Rcpp::wrap(sempl_input_naive_weights(weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sempl_input_grad
-NumericVector sempl_input_grad(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r, SEXP covar_restrict, double tol, int max_iter);
-RcppExport SEXP BCD_sempl_input_grad(SEXP b_weights_rSEXP, SEXP y_rSEXP, SEXP b_rSEXP, SEXP mean_est_rSEXP, SEXP covar_restrictSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type b_weights_r(b_weights_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
-    Rcpp::traits::input_parameter< bool >::type mean_est_r(mean_est_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type covar_restrict(covar_restrictSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
-    rcpp_result_gen = Rcpp::wrap(sempl_input_grad(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sempl_input_reg
-double sempl_input_reg(SEXP b_weights_r, SEXP y_r, SEXP b_r, bool mean_est_r, SEXP covar_restrict, double tol, int max_iter);
-RcppExport SEXP BCD_sempl_input_reg(SEXP b_weights_rSEXP, SEXP y_rSEXP, SEXP b_rSEXP, SEXP mean_est_rSEXP, SEXP covar_restrictSEXP, SEXP tolSEXP, SEXP max_iterSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type b_weights_r(b_weights_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type y_r(y_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type b_r(b_rSEXP);
-    Rcpp::traits::input_parameter< bool >::type mean_est_r(mean_est_rSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type covar_restrict(covar_restrictSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
-    rcpp_result_gen = Rcpp::wrap(sempl_input_reg(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"BCD_bcdC", (DL_FUNC) &BCD_bcdC, 10},
-    {"BCD_sempl_input", (DL_FUNC) &BCD_sempl_input, 7},
-    {"BCD_sempl_input_weights", (DL_FUNC) &BCD_sempl_input_weights, 7},
-    {"BCD_sempl_input_naive", (DL_FUNC) &BCD_sempl_input_naive, 7},
-    {"BCD_sempl_input_naive_weights", (DL_FUNC) &BCD_sempl_input_naive_weights, 7},
-    {"BCD_sempl_input_grad", (DL_FUNC) &BCD_sempl_input_grad, 7},
-    {"BCD_sempl_input_reg", (DL_FUNC) &BCD_sempl_input_reg, 7},
+    {"_BCD_bcdC", (DL_FUNC) &_BCD_bcdC, 10},
     {NULL, NULL, 0}
 };
 

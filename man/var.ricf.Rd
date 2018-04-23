@@ -27,4 +27,3 @@ Calculate Fisher information for non-structural zeros in B and Omega matrix. The
 in the Information matrix follows standard vec(-) convention indexing over rows first then columns. The elements of B
 are ordered before the elements of Omega. Duplicate elements of Omega are not included.
 }
-

@@ -24,6 +24,25 @@
 #'    \item{iterations}{number of iterations until convergence. a single iteration is considered
 #'    a pass through all nodes}
 #'    \item{converged}{boolean on whether or not the algorithm converged before the max iterations}
+#'    
+#' @examples
+#' ## Select True Parameters
+#' Omega.weights <- diag(rep(1, 4))
+#' Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+#' B.weights <- matrix(0, nrow = 4, ncol = 4)
+#' B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+#' ## Generate data
+#' n <- 200
+#' epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+#' Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+#' ## Center Data Y
+# Y <- Y - rowMeans(Y)
+#
+# ## Form ricf arguments
+#' B <- (B.weights != 0) + 0
+#' Omega <- (Omega.weights != 0) + 0 
+#' ricf(B, Omega, Y)
+
 ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
                  tol=1e-7, maxIter=5000, msgs = TRUE, omegaInitScale = .9, maxKap = 1e13) {
   

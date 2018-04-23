@@ -26,4 +26,3 @@ generateModel(v, n, k, d, b, errorDist = "gauss")
 \description{
 Samples a random Graph and Data
 }
-

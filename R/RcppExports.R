@@ -2,30 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 bcdC <- function(Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, tol, omegaInitScale) {
-    .Call('BCD_bcdC', PACKAGE = 'BCD', Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, tol, omegaInitScale)
-}
-
-sempl_input <- function(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter) {
-    .Call('BCD_sempl_input', PACKAGE = 'BCD', b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter)
-}
-
-sempl_input_weights <- function(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter) {
-    .Call('BCD_sempl_input_weights', PACKAGE = 'BCD', b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter)
-}
-
-sempl_input_naive <- function(weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter) {
-    .Call('BCD_sempl_input_naive', PACKAGE = 'BCD', weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter)
-}
-
-sempl_input_naive_weights <- function(weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter) {
-    .Call('BCD_sempl_input_naive_weights', PACKAGE = 'BCD', weights_r, y_r, b_r, omega_r, mean_est_r, tol, max_iter)
-}
-
-sempl_input_grad <- function(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter) {
-    .Call('BCD_sempl_input_grad', PACKAGE = 'BCD', b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter)
-}
-
-sempl_input_reg <- function(b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter) {
-    .Call('BCD_sempl_input_reg', PACKAGE = 'BCD', b_weights_r, y_r, b_r, mean_est_r, covar_restrict, tol, max_iter)
+    .Call('_BCD_bcdC', PACKAGE = 'BCD', Br, Omegar, BInitr, OmegaInitr, Yr, maxIter, sigConv, maxKap, tol, omegaInitScale)
 }
 

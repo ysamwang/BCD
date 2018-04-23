@@ -13,6 +13,7 @@ Description: Estimate mixed linear structural equation models without latent
     recursive (cyclic).
 License: GPL (>= 2)
 Imports:
-    Rcpp (>= 0.12.0)
+    Rcpp (>= 0.12.0),
+    mvtnorm
 LinkingTo: Rcpp, RcppArmadillo (>= 0.5.400.2.0)
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
