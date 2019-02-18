@@ -7,6 +7,9 @@
 var.ricf(Y, B, Omega, B.hat, Omega.hat, type = "expected")
 }
 \arguments{
+\item{Y}{V by n data matrix where each row corresponds to an observed variable and each column 
+corresponds to a multivariate observation}
+
 \item{B}{V by V matrix with {0,1} giving structure of directed edges}
 
 \item{Omega}{V by V matrix with {0,1} giving structure of bi-directed edges}
@@ -15,9 +18,7 @@ var.ricf(Y, B, Omega, B.hat, Omega.hat, type = "expected")
 
 \item{Omega.hat}{V by V matrix giving estimated edge weights for bi-directed edges}
 
-\item{type}{string describing which Fisher Information to calculate. Options are "expected" or "observed".}
-
-\item{S}{V by V matrix corresponding to the sample covariance}
+\item{type}{string describing which Fisher Information to calculate. Options are "expected", "observed", or "sandwich".}
 }
 \value{
 The inverse (scaled by n) Fisher information matrix as derived by Fox and Drton 2014 or the Huber-White misspecified model covariance estimate

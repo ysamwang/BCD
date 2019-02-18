@@ -4,12 +4,13 @@
 #' in the Information matrix follows standard vec(-) convention indexing over rows first then columns. The elements of B
 #' are ordered before the elements of Omega. Duplicate elements of Omega are not included.
 #'
-#' @param S V by V matrix corresponding to the sample covariance    
+#' @param Y V by n data matrix where each row corresponds to an observed variable and each column 
+#'    corresponds to a multivariate observation  
 #' @param B V by V matrix with {0,1} giving structure of directed edges
 #' @param Omega V by V matrix with {0,1} giving structure of bi-directed edges
 #' @param B.hat V by V matrix giving estimated edges weights for directed edges
 #' @param Omega.hat V by V matrix giving estimated edge weights for bi-directed edges
-#' @param type string describing which Fisher Information to calculate. Options are "expected" or "observed".
+#' @param type string describing which Fisher Information to calculate. Options are "expected", "observed", or "sandwich".
 #' @return The inverse (scaled by n) Fisher information matrix as derived by Fox and Drton 2014 or the Huber-White misspecified model covariance estimate
 #' @export
 var.ricf <- function(Y, B, Omega,  B.hat, Omega.hat, type = "expected")

@@ -9,14 +9,22 @@ ricf(B, Omega, Y, BInit = NULL, OmegaInit = NULL, sigConv = TRUE,
   maxKap = 1e+13)
 }
 \arguments{
-\item{B}{V by V matrix with {0,1} giving structure of directed edges. B[i, j] = 1 indicates the edge j -> i.}
+\item{B}{V by V matrix with {0, 1} giving structure of directed edges. B[i, j] = 1 indicates the edge j -> i.}
 
-\item{Omega}{V by V matrix with {0,1} giving structure of bi-directed edges}
+\item{Omega}{V by V matrix with {0, 1} giving structure of bi-directed edges. Omega[i,h] = 1 indicates the edge i <-> j.
+The diagonal elements should also be 1}
+
+\item{Y}{V by n data matrix where each row corresponds to an observed variable and each column 
+corresponds to a multivariate observation}
 
 \item{BInit}{V by V matrix giving initial edges weights for directed edges. If BInit is NULL,
 a default initialization will be used.}
 
-\item{OmegaInit}{V by V matrix giving initial edge weights for bi-directed edges}
+\item{OmegaInit}{V by V matrix giving initial edge weights for bi-directed edges. If OmegaInit 
+is NULL, a default initialization will be used}
+
+\item{sigConv}{boolean which specifies how to measure convergence. \code{TRUE} checks for
+convergence in Sigma while \code{FALSE} checks for convergence in the edge weight estimates}
 
 \item{tol}{convegence tolerance}
 
@@ -28,32 +36,20 @@ a default initialization will be used.}
 The directed edges are initialized through OLS regression and the bidirected edge weights are initialized
 by placing the structural 0's in the covariance of the residuals. If the resulting initialization is not positive
 definite, we scale the elements of corresponding row/columns such that sum(OmegaInit[i,-i]) =  OmegaInit[i,i] * omegaInitScale}
-
-\item{signConv}{boolean which specifies how to measure convergence. \code{TRUE} looks for
-convergence in Sigma while \code{FALSE} looks for convergence in the actual edge weight estimates}
 }
 \value{
-\item{sigmaHat}{estimated covariance matrix at convergence}
-   \item{bHat}{estimated B matrix (edge weights for directed edges) at converegence}
-   \item{omegaHat}{estimated Omega (edge weights for bi-directed edges) at convergence}
-   \item{iterations}{number of iterations until convergence. a single iteration is considered
+\item{SigmaHat}{estimated covariance matrix at convergence}
+   \item{OmegaHat}{estimated Omega (edge weights for bi-directed edges) at convergence}
+   \item{BHat}{estimated B matrix (edge weights for directed edges) at converegence}
+   \item{Iter}{number of iterations until convergence. a single iteration is considered
    a pass through all nodes}
-   \item{converged}{boolean on whether or not the algorithm converged before the max iterations}
+   \item{Converged}{boolean on whether or not the algorithm converged before the max iterations}
 }
 \description{
-Estimates MLE's for cyclic linear SEM's as described in DFW
+Estimates MLE's for cyclic linear SEM's as described in Drton, Fox, Wang (2019)
 }
 \examples{
 ## Select True Parameters
-Omega.weights <- diag(rep(1, 4))
-Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
-B.weights <- matrix(0, nrow = 4, ncol = 4)
-B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
-## Generate data
-n <- 200
-epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
-Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
-## Center Data Y
 B <- (B.weights != 0) + 0
 Omega <- (Omega.weights != 0) + 0 
 ricf(B, Omega, Y)
