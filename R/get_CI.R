@@ -11,7 +11,8 @@
 #' @param B.hat V by V matrix giving estimated edges weights for directed edges
 #' @param Omega.hat V by V matrix giving estimated edge weights for bi-directed edges
 #' @param type string describing which Fisher Information to calculate. Options are "expected", "observed", or "sandwich".
-#' @return The inverse (scaled by n) Fisher information matrix as derived by Fox and Drton 2014 or the Huber-White misspecified model covariance estimate
+#' @return The inverse (scaled by n) Fisher information matrix as derived by Fox and Drton 2014 or
+#'  the Huber-White misspecified model covariance estimate
 #' @export
 var.ricf <- function(Y, B, Omega,  B.hat, Omega.hat, type = "expected")
 {
