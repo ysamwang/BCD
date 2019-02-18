@@ -15,7 +15,7 @@ ricf(B, Omega, Y, BInit = NULL, OmegaInit = NULL, sigConv = TRUE,
 The diagonal elements should also be 1}
 
 \item{Y}{V by n data matrix where each row corresponds to an observed variable and each column 
-corresponds to a multivariate observation}
+corresponds to a multivariate observation. The method assumes that each variable (row) is mean 0.}
 
 \item{BInit}{V by V matrix giving initial edges weights for directed edges. If BInit is NULL,
 a default initialization will be used.}

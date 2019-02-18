@@ -21,7 +21,8 @@ corresponds to a multivariate observation}
 \item{type}{string describing which Fisher Information to calculate. Options are "expected", "observed", or "sandwich".}
 }
 \value{
-The inverse (scaled by n) Fisher information matrix as derived by Fox and Drton 2014 or the Huber-White misspecified model covariance estimate
+The inverse (scaled by n) Fisher information matrix as derived by Fox and Drton 2014 or
+ the Huber-White misspecified model covariance estimate
 }
 \description{
 Calculate Fisher information for non-structural zeros in B and Omega matrix. The ordering of the estimates
