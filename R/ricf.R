@@ -44,6 +44,14 @@
 #' B <- (B.weights != 0) + 0
 #' Omega <- (Omega.weights != 0) + 0 
 #' ricf(B, Omega, Y)
+#' out <- ricf(B, Omega, Y)
+#' se <- var.ricf(Y, B, Omega,  out$BHat, out$OmegaHat, type = "expected")
+#' # get parameter estimates and marginal standard errors
+#' output <- cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega, diag = T))]),
+#'                sqrt(diag(se)))
+#' colnames(output) <- c("estimates", "SE")
+#' rownames(output) <- rownames(se)
+#' output
 
 ricf <- function(B, Omega, Y, BInit = NULL , OmegaInit = NULL, sigConv = TRUE,
                  tol=1e-7, maxIter=5000, msgs = TRUE, omegaInitScale = .9, maxKap = 1e13) {

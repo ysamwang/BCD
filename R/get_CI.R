@@ -80,7 +80,11 @@ var.ricf <- function(Y, B, Omega,  B.hat, Omega.hat, type = "expected")
     }
     
     # return inverse of FI
-    return(solve(I)/n)
+    
+    ret <- solve(I)/n
+    colnames(ret) <- rownames(ret) <- c(apply(which(B != 0, arr.ind = T), MAR = 1, function(x){paste("B[", paste(x, collapse = ","), "]", sep = "")}),
+                                        apply(which(Omega != 0 & lower.tri(Omega, diag = T), arr.ind = T), MAR = 1, function(x){paste("O[", paste(x, collapse = ","), "]", sep = "")}))
+    return(ret)
     
   } else if (type == "sandwich") {
     #### Sandwich Variance based on misspecified model ####
@@ -137,7 +141,10 @@ var.ricf <- function(Y, B, Omega,  B.hat, Omega.hat, type = "expected")
     J[-c(1:sum(B)),c(1:sum(B))] <- t(J[c(1:sum(B)),-c(1:sum(B))])
     
     # return estimate of variance
-    return(solve(J) %*%K %*% t(solve(J)) / n)
+    ret <- solve(J) %*%K %*% t(solve(J)) / n
+    colnames(ret) <- rownames(ret) <- c(apply(which(B != 0, arr.ind = T), MAR = 1, function(x){paste("B[", paste(x, collapse = ","), "]", sep = "")}),
+                                        apply(which(Omega != 0 & lower.tri(Omega, diag = T), arr.ind = T), MAR = 1, function(x){paste("O[", paste(x, collapse = ","), "]", sep = "")}))
+    return(ret)
   } else {
     stop("Invalid type given. Options are: observed, expected, sandwich")
   }

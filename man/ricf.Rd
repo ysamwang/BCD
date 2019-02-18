@@ -53,4 +53,12 @@ Estimates MLE's for cyclic linear SEM's as described in Drton, Fox, Wang (2019)
 B <- (B.weights != 0) + 0
 Omega <- (Omega.weights != 0) + 0 
 ricf(B, Omega, Y)
+out <- ricf(B, Omega, Y)
+se <- var.ricf(Y, B, Omega,  out$BHat, out$OmegaHat, type = "expected")
+# get parameter estimates and marginal standard errors
+output <- cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega, diag = T))]),
+               sqrt(diag(se)))
+colnames(output) <- c("estimates", "SE")
+rownames(output) <- rownames(se)
+output
 }
