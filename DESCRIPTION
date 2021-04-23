@@ -5,9 +5,9 @@ Version: 0.0.99
 Date: 2018-04-22
 Authors: c(person("Christopher", "Fox", role = "aut", comment = "original
     R functions"), person("Y. Samuel", "Wang", role = "aut", comment = "Rcpp
-    implementation", email = "ysamwang@uw.edu"), person("Mathias", "Drton", role =
+    implementation", email = "ysamuelwang@gmail.com"), person("Mathias", "Drton", role =
     "aut"))
-Maintainer: Y. Samuel Wang <ysamwang@uw.edu>
+Maintainer: Y. Samuel Wang <ysamuelwangg@gmail.com>
 Description: Estimate mixed linear structural equation models without latent
     variables. The structural equation model can be recursive (acyclic) or non-
     recursive (cyclic).
@@ -16,4 +16,4 @@ Imports:
     Rcpp (>= 0.12.0),
     mvtnorm
 LinkingTo: Rcpp, RcppArmadillo (>= 0.5.400.2.0)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1

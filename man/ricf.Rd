@@ -4,9 +4,19 @@
 \alias{ricf}
 \title{Fitting Cyclic Linear Structural Equation Models}
 \usage{
-ricf(B, Omega, Y, BInit = NULL, OmegaInit = NULL, sigConv = TRUE,
-  tol = 1e-07, maxIter = 5000, msgs = TRUE, omegaInitScale = 0.9,
-  maxKap = 1e+13)
+ricf(
+  B,
+  Omega,
+  Y,
+  BInit = NULL,
+  OmegaInit = NULL,
+  sigConv = TRUE,
+  tol = 1e-07,
+  maxIter = 5000,
+  msgs = TRUE,
+  omegaInitScale = 0.9,
+  maxKap = 1e+13
+)
 }
 \arguments{
 \item{B}{V by V matrix with {0, 1} giving structure of directed edges. B[i, j] = 1 indicates the edge j -> i.}
