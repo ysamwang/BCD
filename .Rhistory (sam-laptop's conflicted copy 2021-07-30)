@@ -1,0 +1,512 @@
+library(BCD)
+?ricf
+mvtnorm
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+epsilon <- mvtnorm::rmvnorm(200, mean = rep(0, 4), sigma = Omega.weights)
+Omega.weights
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+epsilon <- mvtnorm::rmvnorm(200, mean = rep(0, 4), sigma = Omega.weights)
+epsilon
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+epsilon <- t(mvtnorm::rmvnorm(200, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+Y
+y <- Y - rowMeans(Y)
+Y <- Y - rowMeans(Y)
+rowMeans(Y)
+ricf(B, Omega, Y)
+Omega
+Omega.weights != 0
+Omega <- Omega.weights != 0
+Omega
+Omega <- (Omega.weights != 0) + 0
+Omega
+B <- (B.weights != 0) + 0
+B
+Omega
+ricf(B, Omega, Y)
+B
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 500
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+# Select True Parameters
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+# Center Data Y
+Y <- Y - rowMeans(Y)
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+B.weights
+cov(t(Y))
+library(BCD)
+library(BCD)
+library(BCD)
+install.packages("roxygen2")
+library(BCD)
+?density
+plot(ecdf(tavr_dat$Delay_days))
+tavr_dat <- read.csv("tavr_3_28_18.csv")
+max.days <- 75
+tavr_inc <- subset(tavr_dat, tavr_dat$Delay_days <= max.days)
+breaks <- c(0, 7, 10, 14, 30, max.days)
+priorEvent <- (tavr_inc$Prior_CABG == "Yes" |
+tavr_inc$Prior_MI == "Yes"|
+tavr_inc$Prior_PCI == "Yes") + 0
+bloodThinner <- (tavr_inc$DVT_PE == "Yes" |
+tavr_inc$Prior_GIB == "Yes"|
+tavr_inc$Other_Indication_for_AC == "Yes") + 0
+AV_cut <- as.numeric(tavr_inc$AV_MG < 40 | is.na(tavr_inc$AV_MG))
+MVD <- as.numeric(tavr_inc$Severity_of_Mitral_Regurgitation %in% c("Moderate", "Severe") )
+site <- as.numeric(tavr_inc$Valve_Sheath_Access_Site == "Transfemoral")
+after11 <- as.numeric(gsub(".*/","",tavr_inc$Procedure_Date) > 11)
+medReason <- rep(1, dim(tavr_inc)[1])
+medReason[which(tavr_dat$Include == T)] <- 0
+setwd("~/Dropbox/oldProjects/Cyclic Graphs/BCD")
+tavr_dat <- read.csv("tavr_3_28_18.csv")
+max.days <- 75
+tavr_inc <- subset(tavr_dat, tavr_dat$Delay_days <= max.days)
+breaks <- c(0, 7, 10, 14, 30, max.days)
+priorEvent <- (tavr_inc$Prior_CABG == "Yes" |
+tavr_inc$Prior_MI == "Yes"|
+tavr_inc$Prior_PCI == "Yes") + 0
+bloodThinner <- (tavr_inc$DVT_PE == "Yes" |
+tavr_inc$Prior_GIB == "Yes"|
+tavr_inc$Other_Indication_for_AC == "Yes") + 0
+AV_cut <- as.numeric(tavr_inc$AV_MG < 40 | is.na(tavr_inc$AV_MG))
+MVD <- as.numeric(tavr_inc$Severity_of_Mitral_Regurgitation %in% c("Moderate", "Severe") )
+site <- as.numeric(tavr_inc$Valve_Sheath_Access_Site == "Transfemoral")
+after11 <- as.numeric(gsub(".*/","",tavr_inc$Procedure_Date) > 11)
+medReason <- rep(1, dim(tavr_inc)[1])
+medReason[which(tavr_dat$Include == T)] <- 0
+setwd("~/Dropbox/oldProjects/Cyclic Graphs/BCD")
+setwd("~/Dropbox/tavr")
+library(BCD)
+Omega.weights <- diag(rep(1, 4))
+Omega.weights[1, 2] <- Omega.weights[2, 1] <- .5
+B.weights <- matrix(0, nrow = 4, ncol = 4)
+B.weights[3, 1] <- .5; B.weights[4, 2] <- .7
+# ## Generate data
+n <- 200
+epsilon <- t(mvtnorm::rmvnorm(n, mean = rep(0, 4), sigma = Omega.weights))
+Y <- solve(diag(rep(1, 4)) - B.weights, epsilon)
+#
+# ## Form ricf arguments
+B <- (B.weights != 0) + 0
+Omega <- (Omega.weights != 0) + 0
+ricf(B, Omega, Y)
+#
+# ## Form ricf arguments
+B <- as.numeric(B.weights != 0)
+B
+#
+# ## Form ricf arguments
+B <- (B.weights != 0)
+B
+out <- ricf(B, Omega, Y)
+names(out$SigmaHat)
+out$SigmaHat
+Omega.weights
+out$OmegaHat
+out$BHat
+B.weights
+dim(Y)
+names(out)
+library(BCD)
+install.packages("roxygen2")
+library(BCD)
+library("devtools")
+install_github("ysamwang/BCD")
+names(out)
+se <- var.ricf(Y, B, Omega,  out$BHat, out$OmegaHat, type = "expected")
+out
+se <- var.ricf(Y, B, Omega,  out$BHat, out$OmegaHat, type = "expected")
+names(se)
+se
+cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega))],
+diag(se))
+cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega))]),
+diag(se))
+cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega))]),
+diag(se))
+c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega))])
+which(Omega !=0 & lower.tri(Omega))
+lower.tri(Omega)
+Omega !=0
+cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega, diag = T))]),
+diag(se))
+output <- cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega, diag = T))]),
+sqrt(diag(se)))
+names(output) <- c("estimates", "SE")
+which(B != 0, arr.ind = T)
+apply(which(B != 0, arr.ind = T), MAR = 1, function(x){paste("B [", paste(x, collapse = ","), "]", sep = "")})
+c(apply(which(B != 0, arr.ind = T), MAR = 1, function(x){paste("B [", paste(x, collapse = ","), "]", sep = "")}),
+apply(which(Omega != 0 & lower.tri(Omega, diag = T)), arr.ind = T), MAR = 1, function(x){paste("B [", paste(x, collapse = ","), "]", sep = "")}))
+apply(which(Omega != 0 & lower.tri(Omega, diag = T)), arr.ind = T), MAR = 1, function(x){paste("B [", paste(x, collapse = ","), "]", sep = "")})
+apply(which(Omega != 0 & lower.tri(Omega, diag = T), arr.ind = T), MAR = 1, function(x){paste("B [", paste(x, collapse = ","), "]", sep = "")})
+c(apply(which(B != 0, arr.ind = T), MAR = 1, function(x){paste("B [", paste(x, collapse = ","), "]", sep = "")}),
+apply(which(Omega != 0 & lower.tri(Omega, diag = T), arr.ind = T), MAR = 1, function(x){paste("O [", paste(x, collapse = ","), "]", sep = "")}))
+rownames(output) <- c(apply(which(B != 0, arr.ind = T), MAR = 1, function(x){paste("B [", paste(x, collapse = ","), "]", sep = "")}),
+apply(which(Omega != 0 & lower.tri(Omega, diag = T), arr.ind = T), MAR = 1, function(x){paste("O [", paste(x, collapse = ","), "]", sep = "")}))
+output
+colnames(output) <- c("estimates", "SE")
+rownames(output) <- c(apply(which(B != 0, arr.ind = T), MAR = 1, function(x){paste("B [", paste(x, collapse = ","), "]", sep = "")}),
+apply(which(Omega != 0 & lower.tri(Omega, diag = T), arr.ind = T), MAR = 1, function(x){paste("O [", paste(x, collapse = ","), "]", sep = "")}))
+output <- cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega, diag = T))]),
+sqrt(diag(se)))
+colnames(output) <- c("estimates", "SE")
+rownames(output) <- c(apply(which(B != 0, arr.ind = T), MAR = 1, function(x){paste("B [", paste(x, collapse = ","), "]", sep = "")}),
+apply(which(Omega != 0 & lower.tri(Omega, diag = T), arr.ind = T), MAR = 1, function(x){paste("O [", paste(x, collapse = ","), "]", sep = "")}))
+output
+library(BCD)
+se <- var.ricf(Y, B, Omega,  out$BHat, out$OmegaHat, type = "expected")
+s
+se
+se <- var.ricf(Y, B, Omega,  out$BHat, out$OmegaHat, type = "expected")
+# get parameter estimates and marginal standard errors
+output <- cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega, diag = T))]),
+sqrt(diag(se)))
+colnames(output) <- c("estimates", "SE")
+rownames(output) <- rownames(se)
+output
+library(BCD)
+output <- cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega, diag = T))]),
+sqrt(diag(se)))
+colnames(output) <- c("estimates", "SE")
+rownames(output) <- rownames(se)
+output
+se <- var.ricf(Y, B, Omega,  out$BHat, out$OmegaHat, type = "expected")
+se
+output <- cbind(c(out$BHat[which(B !=0)], out$OmegaHat[which(Omega !=0 & lower.tri(Omega, diag = T))]),
+sqrt(diag(se)))
+colnames(output) <- c("estimates", "SE")
+rownames(output) <- rownames(se)
+output

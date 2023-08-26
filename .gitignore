@@ -7,3 +7,4 @@ src/*.dll
 " (office's conflicted copy 2015-10-01).RData"
 *.RDS
 *.png
+.Rhistory (sam-laptop's conflicted copy 2021-07-30)

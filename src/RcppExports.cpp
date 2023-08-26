@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // bcdC
 Rcpp::List bcdC(SEXP Br, SEXP Omegar, SEXP BInitr, SEXP OmegaInitr, SEXP Yr, int maxIter, int sigConv, double maxKap, double tol, double omegaInitScale);
 RcppExport SEXP _BCD_bcdC(SEXP BrSEXP, SEXP OmegarSEXP, SEXP BInitrSEXP, SEXP OmegaInitrSEXP, SEXP YrSEXP, SEXP maxIterSEXP, SEXP sigConvSEXP, SEXP maxKapSEXP, SEXP tolSEXP, SEXP omegaInitScaleSEXP) {
